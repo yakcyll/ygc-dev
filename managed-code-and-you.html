@@ -1,0 +1,287 @@
+<!doctype html>
+<!--[if lt IE 7]><html class="no-js lt-ie9 lt-ie8 lt-ie7" lang="en"> <![endif]-->
+<!--[if (IE 7)&!(IEMobile)]><html class="no-js lt-ie9 lt-ie8" lang="en"><![endif]-->
+<!--[if (IE 8)&!(IEMobile)]><html class="no-js lt-ie9" lang="en"><![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en"><!--<![endif]-->
+<head>
+<meta charset="utf-8">
+<title>Managed Code And You! &#8211; ygc development blog</title>
+<meta name="description" content="
+  
+    Overview
+  
+
+
+  
+
+
+">
+<meta name="keywords" content="ygc, development, csharp, managed code, .net, clr">
+
+  
+
+<!-- Twitter Cards -->
+<meta name="twitter:title" content="Managed Code And You!">
+<meta name="twitter:description" content="
+  
+    Overview
+  
+
+
+  
+
+
+">
+<meta name="twitter:site" content="@yakcyll">
+
+
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="/images/header.png">
+
+<!-- Open Graph -->
+<meta property="og:locale" content="">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Managed Code And You!">
+<meta property="og:description" content="
+  
+    Overview
+  
+
+
+  
+
+
+">
+<meta property="og:url" content="/managed-code-and-you.html">
+<meta property="og:site_name" content="ygc development blog">
+
+
+
+
+
+<link rel="canonical" href="/managed-code-and-you.html">
+<link href="/feed.xml" type="application/atom+xml" rel="alternate" title="ygc development blog Feed">
+
+
+<!-- http://t.co/dKP3o1e -->
+<meta name="HandheldFriendly" content="True">
+<meta name="MobileOptimized" content="320">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<!-- For all browsers -->
+<link rel="stylesheet" href="/assets/css/main.css">
+
+<meta http-equiv="cleartype" content="on">
+
+<!-- HTML5 Shiv and Media Query Support -->
+<!--[if lt IE 9]>
+	<script src="/assets/js/vendor/html5shiv.min.js"></script>
+	<script src="/assets/js/vendor/respond.min.js"></script>
+<![endif]-->
+
+<!-- Modernizr -->
+<script src="/assets/js/vendor/modernizr-2.7.1.custom.min.js"></script>
+
+<link href='//fonts.googleapis.com/css?family=PT+Sans+Narrow:400,700%7CPT+Serif:400,700,400italic' rel='stylesheet' type='text/css'>
+
+<!-- Icons -->
+<!-- 16x16 -->
+<link rel="shortcut icon" href="/favicon.ico">
+<!-- 32x32 -->
+<link rel="shortcut icon" href="/favicon.png">
+
+<!-- use https god damn it! -->
+<script type="text/javascript">
+  if (window.location.protocol != "https:" && window.location.href.indexOf("http://localhost") !== 0)
+    window.location.href = "https:" + window.location.href.substring(window.location.protocol.length);
+</script>
+
+</head>
+
+<body class="post">
+
+<!--[if lt IE 9]><div class="browser-upgrade alert alert-info">You are using an <strong>outdated</strong> browser. Please <a href="http://browsehappy.com/">upgrade your browser</a> to improve your experience.</div><![endif]-->
+
+<div class="navigation-wrapper">
+	<div class="site-name">
+		<a href="">ygc development blog</a>
+	</div><!-- /.site-name -->
+	<div class="top-navigation">
+		<nav role="navigation" id="site-nav" class="nav">
+		    <ul>
+		        
+					    
+					        
+					    
+					    <li><a href="/" >Main Page</a></li>
+					  
+					    
+					        
+					    
+					    <li><a href="/posts/" >Posts</a></li>
+					  
+		    </ul>
+		</nav>
+	</div><!-- /.top-navigation -->
+</div><!-- /.navigation-wrapper -->
+
+
+  <div class="image-wrap">
+  <img src=
+    
+      "/images/header.png"
+    
+  alt="Managed Code And You! feature image">
+  
+  </div><!-- /.image-wrap -->
+
+
+<div id="main" role="main">
+  <div class="article-author-side">
+    
+
+<!--
+	<img src="/images/" class="bio-photo" alt="yakcyll~ bio photo">
+    -->
+<h3>yakcyll~</h3>
+<p></p>
+<a href="mailto:yakcyll@gmail.com" class="author-social" target="_blank"><i class="fa fa-envelope-square"></i> Email</a>
+<a href="http://twitter.com/yakcyll" class="author-social" target="_blank"><i class="fa fa-twitter-square"></i> Twitter</a>
+
+
+
+
+
+<a href="http://github.com/yakcyll" class="author-social" target="_blank"><i class="fa fa-github"></i> Github</a>
+
+
+
+
+
+
+
+  </div>
+  <article class="post">
+    <div class="headline-wrap">
+      
+        <h1><a href="/managed-code-and-you.html" rel="bookmark" title="Managed Code And You!">Managed Code And You!</a></h1>
+      
+    </div><!--/ .headline-wrap -->
+    <div class="article-wrap">
+      <section id="table-of-contents" class="toc">
+  <header>
+    <h3>Overview</h3>
+  </header>
+<div id="drawer">
+<ul id="markdown-toc">
+  <li><a href="#wait-does-that-mean-you-gave-up-already">Wait, does that mean you gave up already?</a></li>
+  <li><a href="#what-about-ccx">What about C++/CX?</a></li>
+  <li><a href="#should-that-fail-will-you-be-writing-everything-in-c-then">Should that fail, will you be writing everything in C# then?</a></li>
+  <li><a href="#environment-and-requirements">Environment and requirements</a></li>
+  <li><a href="#a-task-was-canceled">A task was canceled.</a></li>
+  <li><a href="#could-not-find-assembly-mscorlibdll">Could not find assembly mscorlib.dll</a></li>
+</ul>
+
+  </div>
+</section>
+
+<p>Managed code languages, including, but not limited to, Java and C#, have arguably many low-level properties that differentiate them from the usual native ahead-of-time compilation languages. They are known for making use of various layers between code understandable for humans and the bare-metal machine code during its execution. That way the development process speeds up dramatically - the write-compile-deploy-test cycle doesn’t last ages for complex applications due to shortening compilation time - but the performance of execution of bytecode, which is a product of high-level compilers later fed to JIT compilers (C#) or virtual machine interpreters, is considered sub-par in comparison to native executables (I saw conflicting descriptions of how C# works compared to JVM, be your own judge <sup><a href="https://stackoverflow.com/questions/1564348/is-the-clr-a-virtual-machine">[1]</a><a href="http://blogs.msdn.com/b/brada/archive/2005/01/12/351958.aspx">[2]</a></sup>).</p>
+
+<p class="parind">Now, we live in times when your grandma’s phone has more raw computational power than my old fashioned PC-class desktop machine, so we figured out we don’t have to worry too much about that slight performance hit. A hundred thousand cycles a second <sup>[citation needed]</sup> here and there, no big deal, right? Just for the record, I absolutely despise people who state that sort of bullshit, regardless of whether it’s in public or in private. Rapid development is the name of the game these days though and for a lot of people C++ development (pre-C++11) doesn’t exactly correlate with quickness (or code safety for that matter). And, whether we like it or not, they have a point.</p>
+
+<p class="parind">Regardless, C++ is, at its core, an extensive expansion of its low-level, just-above-assembler predecessor - C. You wouldn’t expect it to be natively used to prototype and design user interfaces. Yes, there are various middlewares that extend C++ even further - Qt to name one - but when you think UI, your first instinct is to look for something else (as a sidenote, I wonder how much time it will take for someone to build a Rust framework with an appropriate set of features). Now I’m not gonna bullshit you and tell you that C# was written specifically for that, but nowadays it’s fairly easily to just sit down and start pumping out apps for whatever platform you want, with whatever sort of interfaces you want.</p>
+
+<h2 id="wait-does-that-mean-you-gave-up-already">Wait, does that mean you gave up already?</h2>
+
+<p>My Saturday has been spent, in its entirety, on researching how to mesh C++ code, which I wanted to use to get all the engine parts in, including networking, with declarative wonders of UI design offered by XAML and its event-based architechture. I’ve been fairly unsurprised when after spending good two hours trying to glue a few random bits and pieces together into something that would at least survive the ‘Build Solution’ part of the process, I’ve got to read about how mobile copies of Windows 8 handle native code. You can check out the info about that <a href="http://developer.nokia.com/community/wiki/C%2B%2B_support_from_Windows_Phone_8">on a Nokia Developer page related to C++ support in WP8</a>; long story short, this is what Windows Phone Runtime is there for. </p>
+
+<p>WinPRT turns out to be the middleware that serves as a mean to marshall data between your native code and managed code written in C# - basically it allows you to satisfy the requirement of converting your low-level, native types, as well as various STL containers you’d happen to use, which all aren’t supported natively by CLR (Common Language Runtime, .NET VM), into their managed counterparts (if you wonder why this is the case, I heard safe memory management is the flavor of the month). In return, it lets you, for example, very easily handle multithreading and asynchronous result computation. For more on all that business, I recommend watching <a href="http://channel9.msdn.com/Events/TechEd/NorthAmerica/2013/WPH-B308">this hour-long presentation</a>, serving as an introduction of valors of using C++ for writing WP8 apps. As a matter of fact, today marks one of those rare days in my life when I heard someone saying that the most important reason to consider using C++ when writing applications is portability.</p>
+
+<p class="parind">The reason I’m saying all this is because, as I mentioned before, I have very limited experience with languages other than C++ (and Python, but I doubt that will be of much use in this particular case) and the idea of writing and maintaining a ton of boilerplate code just for the sake of having the implementation of the game engine written in native code seems like a massive, unwarranted pain in the ass. And I’m not even mentioning performance issues - I have no reasonable way to perform the statistical analysis at this current moment, so considering all this is meant to introduce me to the currently popular technology along the way, I will worry about that particular aspect later.</p>
+
+<h2 id="what-about-ccx">What about C++/CX?</h2>
+
+<p>Component extentions seem like the thing I’ll want to pay closer attention to - they are described as the bridge between C++ with STL and Windows Runtime, but I haven’t gotten around to reading much about them yet and it all looks much like the middleware code I’d have to write for WinPRT, so I don’t get my hopes up. Still, it seems to be a newer technology and, hopefully, it will turn out to be the middleground I was looking for. I’ll be looking into them next and will document my research appropriately.</p>
+
+<h2 id="should-that-fail-will-you-be-writing-everything-in-c-then">Should that fail, will you be writing everything in C# then?</h2>
+
+<p>No!</p>
+
+<h2 class="no_toc" id="oh-thanks-heavens-you-came-to---wait-what">Oh, thanks heavens, you came to– wait, what?</h2>
+
+<p>It sure as hell seems like a lot of work to do, but let’s face it - C# gives me nowhere as much control over my code as C++ does. Writing middleware is going to be one damn hard challenge, considering I wanted to represent, interpret and modify the entire gamestate in a rather low-level fashion, but at least it will give me a good overview of the process and answer my question as to viability of partaking in such endeavours in the future. WinPRT has its uses, so even if it doesn’t seem exactly well fit for my particular need, it might prove itself worthy later down the road. Forcing C++ into the project might even prove itself to be a bad idea at some point, considering I will have to handle networking and user interfaces somehow, but the progress on the sketch of the engine’s architechture I’ve made so far suggests that abandoning C++ and moving everything to managed code, i.e. refactoring literally everything, should not be a major issue.</p>
+
+<h1 class="no_toc" id="ok-time-for-the-fun-parts---development-tidbits">OK, time for the fun parts - development tidbits.</h1>
+
+<h2 id="environment-and-requirements">Environment and requirements</h2>
+
+<p>My current development environment consists of a one PC-class machine (Q9450, 4GB DDR2 RAM) operating on Windows 7, equipped with Oracle VirtualBox and Visual Studio 2013 Professional, and a Nokia Lumia 520 phone, running Windows Phone 8.1. It’s important to note why Virtualbox is there - <strong>Visual Studio running on Windows 7 does not allow you to develop Metro style apps, or any apps designed for Windows 8 for that matter.</strong> To do that, you need to obtain a Windows 8 (x64) copy to install either on your PC or in a virtual machine instance. In case you are planning to use Windows Phone 8 SDK, you might want to consider getting a Pro or Enterprise version of the OS and a processor that supports SLAT (Second Level Address Translation - basically nested paging - so at least Core i3 or Core 2 Quad or equivalent) as the phone emulator coming with it runs in an additional Hyper-V instance. Should you not want to use Windows 8 as a host operating system, you should use VMWare Workstation to host a Win8 instance; as far as I know, VirtualBox doesn’t expose Hyper-V functionality to guest machines. <sup><a href="https://stackoverflow.com/questions/13145464/what-does-it-take-to-run-the-windows-phone-8-emulator/13145586#13145586">[5]</a><a href="http://developer.nokia.com/community/wiki/Windows_Phone_8_SDK_on_a_Virtual_Machine_with_Working_Emulator">[6]</a></sup></p>
+
+<h2 id="a-task-was-canceled">A task was canceled.</h2>
+
+<p>If you ever stumble upon that error when trying to build a solution, check your system clock’s timezone and restart Visual Studio.</p>
+
+<h2 id="could-not-find-assembly-mscorlibdll">Could not find assembly mscorlib.dll</h2>
+
+<p>You can imagine where that came from. If you ever get yourself staring at that error message sprawling all over your compile log, it will basically mean you are forgetting about the middleware you need to bind native and managed code together. In this particular case, without going into details <sup><a href="https://stackoverflow.com/questions/402572/mscorlib-dll-system-dll">[7]</a></sup>, if you see that, I suggest saving your architecture-independent code elsewhere and starting a new, appropriate for your use, project from scratch, adding those saved bits while you develop required boilerplate to support them.</p>
+
+
+      <hr />
+      <footer role="contentinfo">
+        <div class="article-author-bottom">
+          
+
+<!--
+	<img src="/images/" class="bio-photo" alt="yakcyll~ bio photo">
+    -->
+<h3>yakcyll~</h3>
+<p></p>
+<a href="mailto:yakcyll@gmail.com" class="author-social" target="_blank"><i class="fa fa-envelope-square"></i> Email</a>
+<a href="http://twitter.com/yakcyll" class="author-social" target="_blank"><i class="fa fa-twitter-square"></i> Twitter</a>
+
+
+
+
+
+<a href="http://github.com/yakcyll" class="author-social" target="_blank"><i class="fa fa-github"></i> Github</a>
+
+
+
+
+
+
+
+        </div>
+        <p class="byline"><strong>Managed Code And You!</strong> was published on <time datetime="2014-10-18T00:00:00+02:00">October 18, 2014</time> and last modified on <time datetime="2014-10-18">October 18, 2014</time>.</p>
+      </footer>
+    </div><!-- /.article-wrap -->
+  
+  </article>
+</div><!-- /#main -->
+
+<div class="footer-wrap">
+  <div class="related-articles">
+  <h4>You might also enjoy <small class="pull-right">(<a href="/posts/">View all posts</a>)</small></h4>
+    <ul>
+    
+      <li><a href="/beginning.html" title="Beginning">Beginning</a></li>
+    
+    </ul>
+    <hr />
+  </div><!-- /.related-articles -->
+  <footer>
+    
+
+<span>&copy; 2014 yakcyll~. Using <a href="http://mademistakes.com/minimal-mistakes/">Minimal Mistakes</a> theme.</span>
+
+  </footer>
+</div><!-- /.footer-wrap -->
+
+<script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+<script>window.jQuery || document.write('<script src="/assets/js/vendor/jquery-1.9.1.min.js"><\/script>')</script>
+<script src="/assets/js/scripts.min.js"></script>
+
+	        
+
+</body>
+</html>
