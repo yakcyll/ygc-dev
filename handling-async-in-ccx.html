@@ -5,7 +5,7 @@
 <!--[if gt IE 8]><!--> <html class="no-js" lang="en"><!--<![endif]-->
 <head>
 <meta charset="utf-8">
-<title>Beginning &#8211; ygc development blog</title>
+<title>Handling async in C++/CX &#8211; ygc development blog</title>
 <meta name="description" content="
   
     Overview
@@ -16,12 +16,12 @@
 
 
 ">
-<meta name="keywords" content="ygc, development, musings">
+<meta name="keywords" content="ygc, development, c++/cx">
 
   
 
 <!-- Twitter Cards -->
-<meta name="twitter:title" content="Beginning">
+<meta name="twitter:title" content="Handling async in C++/CX">
 <meta name="twitter:description" content="
   
     Overview
@@ -41,7 +41,7 @@
 <!-- Open Graph -->
 <meta property="og:locale" content="">
 <meta property="og:type" content="article">
-<meta property="og:title" content="Beginning">
+<meta property="og:title" content="Handling async in C++/CX">
 <meta property="og:description" content="
   
     Overview
@@ -52,14 +52,14 @@
 
 
 ">
-<meta property="og:url" content="https://yakcyll.github.io/ygc-dev/beginning.html">
+<meta property="og:url" content="https://yakcyll.github.io/ygc-dev/handling-async-in-ccx.html">
 <meta property="og:site_name" content="ygc development blog">
 
 
 
 
 
-<link rel="canonical" href="https://yakcyll.github.io/ygc-dev/beginning.html">
+<link rel="canonical" href="https://yakcyll.github.io/ygc-dev/handling-async-in-ccx.html">
 <link href="https://yakcyll.github.io/ygc-dev/feed.xml" type="application/atom+xml" rel="alternate" title="ygc development blog Feed">
 
 
@@ -131,7 +131,7 @@
     
       "https://yakcyll.github.io/ygc-dev/images/header.png"
     
-  alt="Beginning feature image">
+  alt="Handling async in C++/CX feature image">
   
   </div><!-- /.image-wrap -->
 
@@ -164,7 +164,7 @@
   <article class="post">
     <div class="headline-wrap">
       
-        <h1><a href="https://yakcyll.github.io/ygc-dev/beginning.html" rel="bookmark" title="Beginning">Beginning</a></h1>
+        <h1><a href="https://yakcyll.github.io/ygc-dev/handling-async-in-ccx.html" rel="bookmark" title="Handling async in C++/CX">Handling async in C++/CX</a></h1>
       
     </div><!--/ .headline-wrap -->
     <div class="article-wrap">
@@ -174,37 +174,28 @@
   </header>
 <div id="drawer">
 <ul id="markdown-toc">
-  <li><a href="#so-what-is-all-this">So what is all this?</a></li>
-  <li><a href="#why-not-androidios">Why not Android/iOS?</a></li>
-  <li><a href="#can-i-help">Can I help?</a></li>
+  <li><a href="#how-to-handle-asynchronous-turn-based-input-in-ccx">How to handle asynchronous, turn-based input in C++/CX?</a></li>
 </ul>
 
   </div>
 </section>
 
-<p><em>Disclaimer: recent reports suggest that the upcoming collection of factoids is not an accurate depiction of the current state of reality. Also, I’m a biased hater; if you have a moment to spare and a great desire to make the world a better place, feel free to show me the advantages Java has over C++ for an advanced, experienced user.</em></p>
+<p>I didn’t plan to write much this time, but with this little bit of downtime, I figured I’d get this load of horseshit off my back.</p>
 
-<p class="parind">Once upon a time  there was Java. It became so popular, people started recommending it as an introductory programming language for the masses. The times of incessant memory leaks, corruption errors, buffer overflows were gone. With its intuitive syntax and content management came Sun’s JVM, which allowed for then-unheard-of portability and scalability.</p>
+<p class="parind">It turns out that, yes, C++/CX is exactly what I was looking for. It’s an extension of C++ that supplies all the thigamajigs that .NET requires to run smoothly, including reference counting, metadata generation and others. With a few syntax changes and various new restrictions regarding, for example, code visibility, you’ll be free to use your legacy code and your legacy habits to write Windows Runtime based apps. I mean, sign me in!</p>
 
-<p class="parind">Well, guess what, Microsoft doesn’t seem to like it much.</p>
+<p>All this is subject to common limitations though. While your backend code is running natively and you can code your UI logic in C++, the UI architecture remains unchanged and you still have to work around its asynchronous nature - that means handling all the various events, applications becoming frozen and whatnots. One major hurdle with that that I’ve just encountered is related to a design decision that will shape up the entire engine for the rest of the process. </p>
 
-<p class="parind">You’d think that, when it comes to an operating system that’s been a piece of software used by the majority of the people in the world until recent years, having an access to (arguably) basic, prevalent technologies is a given. That apparently doesn’t apply to WP8 (and, most probably, previous versions), which, to my surprise, as a WinRT based OS (specifically WPRT) has no JVM supplied with it or available from other vendors. Colour me intrigued.</p>
+<h2 id="how-to-handle-asynchronous-turn-based-input-in-ccx">How to handle asynchronous, turn-based input in C++/CX?</h2>
 
-<h2 id="so-what-is-all-this">So what is all this?</h2>
+<p>Imagine you have a black box storing some sort of data defined as its state. Said box can gather information from various, but well-defined external sources and modify its state based on that information. Your job is to design the way this black box will handle the process. </p>
 
-<p>ygc is going to be an ongoing effort to produce a stable, robust and minimalist client for playing Go, both alone (hopefully) and against other people, using the most popular means of connecting players (P2P over Wi-Fi and Bluetooth as well as multiplayer over an IGS server). It will also let you record and watch replays, read commentary attached to it, solve problems and publish your own content of that sort to the rest of the userbase. All that on Windows Phone 8 and later. It sounds neat, and it should - it will keep you on your toes before you support it recklessly, without having a solid reason to believe I will finish developing all these features. </p>
+<p>From my understanding, there are basically two approaches one can decide on in this particular case. The first one is to define events that would spawn upon receiving data from a given source, handlers of which would deal with information parsing and state modification. The other is to make use of a program loop that would listen for data on every source in turn and, upon acquiring them, deal with them appropriately.</p>
 
-<p>This blog is meant partly as a dev diary. Nothing spectacular, just a bunch of random thoughts and insights into the process; I figured developing apps for WP isn’t as straightforward as some could think (or present to others), so should anyone embark on a similar journey, I hope this will answer at least a few questions down the way. The other part of the reason for its existence is that I enjoy spawning some musings on various topics from time to time. Don’t worry though, I’ll make sure they are tagged appropriately.</p>
+<p>In regular C++ there is no such construct as events, so the usual approach to the issue of processing async data, for example in regards to networking, would be the latter one. For example, you pop a select()/read() on a socket, parse the buffer, do some work and do the same for another socket. That, sadly, won’t work in Windows Phone 8.1 (or, as I suspect, whenever an UI, that is tightly-coupled to the app’s backend, is concerned), because whenever your logic hangs, your UI pretty much does too. The way to handle asynchronous data processing in C++/CX seems to be to make use of tasks - chains of well-defined operations that await results of each part of the chain and then pass it to the next, up until the processing is done. That doesn’t solve the issue at hand though, as in this case, the definition of the operation isn’t the culprit - it’s registering that an event occured and then acting accordingly.</p>
 
-<h2 id="why-not-androidios">Why not Android/iOS?</h2>
+<p>What you can do in this case is to either abuse semaphores - create tasks with functions that hang on a semaphore, which would be signalled by an event when a specific piece of input arrives - or abandon this approach altogether and pick up the other one, securing the state from being modified by other means. I’ve opened a StackOverflow question on this issue - maybe by the time you read it, somebody will provide useful feedback on it: https://stackoverflow.com/questions/26456863/is-there-a-substitution-for-cs-await-in-c-cx</p>
 
-<p>I can’t care less for the platform I’m developing for. In fact, I dislike the whole business in general. In this particular case, I turned out to have a phone that’s unable to let me play Go while travelling and that pissed me off. I got curious if I can solve this issue with my limited knowledge of languages beside C/C++ and so here we are. As long as Android lets you write code in C++, I’ll try and separate the engine and underlying logic-based features from system-specific implementation, so you will be free to port the thing there. As for iOS, I have no desire to learn Obj-C nor Swift just to have the client available there, but again - you’re free to take the code from here, rewrite it in your language of choice and publish it in Apple Store. I’m pretty sure both these platforms do have access to Java-based clients though, so there’s that.</p>
-
-<h2 id="can-i-help">Can I help?</h2>
-
-<p>Pull requests are always welcome. I give you no guarantee that the code you submit will be used or even partially used in the process, but you can always ask whether the particular part you are interested in modifying requires more work at the moment.</p>
-
-<p class="parind">You can expect rather frequent updates in here whenever I’m doing actual progress with the project. If you have any questions, feel free to contact me by mail or Twitter, or IRC (yakcyll@quakenet). If you are interested in competitive gaming, take a look at my previous blog at <a href="http://roadtoprem.blogspot.com">http://roadtoprem.blogspot.com</a>. I’m aware it might spark distrust, but there’s a lot of thoughts saved there I still identify with.</p>
 
       <hr />
       <footer role="contentinfo">
@@ -232,7 +223,7 @@
 
 
         </div>
-        <p class="byline"><strong>Beginning</strong> was published on <time datetime="2014-10-17T00:00:00+02:00">October 17, 2014</time> and last modified on <time datetime="2014-10-18">October 18, 2014</time>.</p>
+        <p class="byline"><strong>Handling async in C++/CX</strong> was published on <time datetime="2014-10-19T00:00:00+02:00">October 19, 2014</time> and last modified on <time datetime="2014-10-19">October 19, 2014</time>.</p>
       </footer>
     </div><!-- /.article-wrap -->
   
@@ -244,9 +235,9 @@
   <h4>You might also enjoy <small class="pull-right">(<a href="https://yakcyll.github.io/ygc-dev/posts/">View all posts</a>)</small></h4>
     <ul>
     
-      <li><a href="https://yakcyll.github.io/ygc-dev/handling-async-in-ccx.html" title="Handling async in C++/CX">Handling async in C++/CX</a></li>
-    
       <li><a href="https://yakcyll.github.io/ygc-dev/managed-code-and-you.html" title="Managed Code And You!">Managed Code And You!</a></li>
+    
+      <li><a href="https://yakcyll.github.io/ygc-dev/beginning.html" title="Beginning">Beginning</a></li>
     
     </ul>
     <hr />
