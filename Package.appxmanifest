@@ -1,0 +1,30 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Package xmlns="http://schemas.microsoft.com/appx/2010/manifest" xmlns:m2="http://schemas.microsoft.com/appx/2013/manifest" xmlns:m3="http://schemas.microsoft.com/appx/2014/manifest" xmlns:mp="http://schemas.microsoft.com/appx/2014/phone/manifest">
+  <Identity Name="178bc20c-8c1e-42e3-a2e2-8c9eec881f50" Publisher="CN=m" Version="1.0.0.0" />
+  <mp:PhoneIdentity PhoneProductId="178bc20c-8c1e-42e3-a2e2-8c9eec881f50" PhonePublisherId="00000000-0000-0000-0000-000000000000" />
+  <Properties>
+    <DisplayName>ygc</DisplayName>
+    <PublisherDisplayName>m</PublisherDisplayName>
+    <Logo>Assets\app_assets\ygc-tile-store.png</Logo>
+  </Properties>
+  <Prerequisites>
+    <OSMinVersion>6.3.1</OSMinVersion>
+    <OSMaxVersionTested>6.3.1</OSMaxVersionTested>
+  </Prerequisites>
+  <Resources>
+    <Resource Language="x-generate" />
+  </Resources>
+  <Applications>
+    <Application Id="App" Executable="$targetnametoken$.exe" EntryPoint="ygc.App">
+      <m3:VisualElements DisplayName="ygc" Square150x150Logo="Assets\app_assets\ygc-tile-150x150.png" Square44x44Logo="Assets\app_assets\ygc-tile-44x44.png" Description="ygc" ForegroundText="light" BackgroundColor="transparent">
+        <m3:DefaultTile Square71x71Logo="Assets\app_assets\ygc-tile-71x71.png">
+        </m3:DefaultTile>
+        <m3:SplashScreen Image="Assets\app_assets\ygc-tile-splash.png" />
+      </m3:VisualElements>
+    </Application>
+  </Applications>
+  <Capabilities>
+    <Capability Name="internetClientServer" />
+    <Capability Name="picturesLibrary" />
+  </Capabilities>
+</Package>
