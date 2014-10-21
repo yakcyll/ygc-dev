@@ -7,21 +7,20 @@
 
 #include "ygc.h"
 
+using namespace Windows::UI::Xaml;
+
 namespace ygc {
 
 	namespace PlayerInput {
 
-		public ref class ScreenInput : public ygcPlayerInput {
+		private ref class ScreenInput : public ygcPlayerInput {
 		private:
-			pair<uint16_t, uint16_t> coords;
+			static uint16_t screenPlayers;
+			~ScreenInput();
+		internal:
+			ScreenInput();
 
-		public:
-			ScreenInput() { ypiType = ygcPlayerInputType::SCREEN; }
-
-			bool takeMove(uint16_t, uint16_t) override;
-			void chatter(Platform::String^) override;
-
-			void signalMove(uint16_t, uint16_t);
+			bool handleInput(Object^, RoutedEventArgs^) override;
 		};
 
 	};

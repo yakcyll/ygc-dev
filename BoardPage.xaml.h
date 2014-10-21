@@ -7,6 +7,8 @@
 
 #include "BoardPage.g.h"
 
+using namespace Windows::Foundation;
+
 namespace ygc
 {
 	/// <summary>
@@ -14,14 +16,17 @@ namespace ygc
 	/// </summary>
 	public ref class BoardPage sealed
 	{
-	public:
-		Grid^ boardGrid;
+	internal:
+		Canvas^ boardGrid;
 		ygcMatch^ currentMatch;
-
-		BoardPage();
 
 		void InitMatch();
 		void InitBoardGrid();
+		void DrawBoardGrid();
+
+	public:
+		BoardPage();
+		void debug(Canvas^ c, Point tapPoint);
 
 	protected:
 		virtual void OnNavigatedTo(Windows::UI::Xaml::Navigation::NavigationEventArgs^ e) override;

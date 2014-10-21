@@ -7,76 +7,103 @@
 
 using namespace Platform;
 using namespace Platform::Collections;
+using namespace Windows::UI::Xaml;
 using namespace Windows::UI::Xaml::Controls;
 using namespace Windows::System::Threading;
 
 #include <cstdint>
 #include <list>
-#include <vector>
+
 
 namespace ygc {
+
+	ref class ygcBoard;
+	ref class ygcPlayer;
+	ref class ygcMatch;
 
 	typedef bool(*moveValidator)(ygcBoard^, uint16_t, uint16_t);
 	typedef void(*postMoveAction)(ygcBoard^, uint16_t, uint16_t);
 
 	enum ygcPlayerInputType { DUMMY, SCREEN, WIFI, BT, IGS, AI, SPEC };
 	enum ygcStoneStatus { ADDED, FALLEN };
+	enum ygcMatchState { ACTIVE, ARCHIVAL };
 	
 	template<typename T1, typename T2>
 	private ref class pair sealed {
 
 	public:
-		T1 first;
-		T2 second;
+		property T1 first;
+		property T2 second;
 		pair() : first(), second() { }
 		pair(T1 t1, T2 t2) : first(t1), second(t2) { }
 	};
 
-	private ref class ygcField : public Button {
-	public:
-		property ygcStoneColor^ takenBy;
-		property uint16_t x;
-		property uint16_t y;
+	private ref class ygcStoneColor {
+	internal:
+		inline void operator=(const ygcStoneColor %sc) { this->stoneColor = sc.stoneColor; this->maxval = sc.maxval; }
+		inline void operator=(const int &i) { if (maxval) this->stoneColor = i % maxval; }
+		inline bool operator==(const int &i) { if (i == stoneColor) return true; return false; }
+		inline ygcStoneColor operator+(const int &i) { return ygcStoneColor((this->stoneColor + i) % maxval, maxval); }
+		inline ygcStoneColor% operator+=(const int &i) { this->stoneColor = (this->stoneColor + i) % maxval; return *this; }
+		inline ygcStoneColor operator-(const int &i) { return ygcStoneColor(((this->stoneColor - i) < 0 ? (this->stoneColor - i) + maxval : (this->stoneColor - i)), maxval); }
+
+		uint16_t stoneColor;
+		uint16_t maxval;
+
+		ygcStoneColor() : maxval(0) {}
+		ygcStoneColor(const uint16_t &i, const uint16_t &j) { this->stoneColor = i; maxval = j; }
+		ygcStoneColor(const ygcStoneColor %y) : stoneColor(y.stoneColor), maxval(y.maxval) {}
+		operator int() { return stoneColor; }
+
+		void increment(unsigned int count = 1) { this->stoneColor += count; this->stoneColor %= maxval; if (this->stoneColor == 0) this->stoneColor++; }
+		ygcStoneColor previous(unsigned int count = 1) { return ygcStoneColor(((this->stoneColor - count) < 1 ? (this->stoneColor - count) + maxval - 1: (this->stoneColor - count)), maxval); }
+	};
+
+	private ref class ygcStoneChange {
+	internal:
+		ygcStoneColor^ whose;
+		ygcStoneStatus status;
+		uint16_t x;
+		uint16_t y;
+
+		ygcStoneChange(ygcStoneColor^ w, ygcStoneStatus s, uint16_t x1, uint16_t y1) : whose(w), status(s), x(x1), y(y1) {}
+	};
+
+	private ref class ygcMove sealed {
+	internal:
+		Vector<ygcStoneChange^> stonesChanged;
+	};
+
+	private ref class ygcField sealed {
+	internal:
+		ygcStoneColor^ takenBy;
+		uint16_t x;
+		uint16_t y;
 
 	};
 
-	public ref class ygcBoard sealed {
-
-	public:
+	private ref class ygcBoard sealed {
+	internal:
 		uint16_t sBoardWidth;
 		uint16_t sBoardHeight;
 
-		Array<Array<ygcField ^>^>^ fields;
+		Array<Object^>^ fields;
+		Vector<ygcMove^>^ moveHistory;
 
-		ygcBoard(uint16_t sbw, uint16_t sbh) : sBoardWidth(sbw), sBoardHeight(sbh) { 
-			fields = ref new Array<Array<ygcField^>^>(sBoardWidth); 
-			for (auto i = 0; i < sBoardWidth; ++i)
-				fields[i] = ref new Array<ygcField^>(sBoardHeight);
-		}
-	};
-
-	private ref class ygcStoneColor abstract {
-	public:
-		uint16_t stoneColor;
-	protected:
-		ygcStoneColor();
+		ygcBoard(uint16_t, uint16_t);
+		ygcField^& getAt(uint16_t, uint16_t);
 	};
 
 	private ref class ygcPlayerInput abstract {
-	private:
-
-	public:
+	internal:
 		ygcPlayerInputType ypiType;
+		ygcPlayer^ player;
 
-		virtual bool takeMove(uint16_t x, uint16_t y) = 0;
-		virtual void chatter(Platform::String^) = 0;
-
-		ygcPlayerInput();
+		virtual bool handleInput(Object^, RoutedEventArgs^) = 0;
 	};
 
-	public ref class ygcPlayer sealed {
-
-	public:
+	private ref class ygcPlayer sealed {
+	internal:
 		String^ name;
 		ygcStoneColor^ color;
 		uint32_t stonesTaken;
@@ -86,52 +113,42 @@ namespace ygc {
 
 		ygcPlayerInput^ inputHandler;
 
-		ygcPlayer(ygcStoneColor^);
-		ygcPlayer(ygcStoneColor^, ygcPlayerInputType);
-		ygcPlayer(ygcStoneColor^, ygcPlayerInputType, String^);
+		ygcMatch^ activeMatch;
 
-		void initPlayer(ygcPlayerInputType);
+		ygcPlayer(ygcMatch^, ygcStoneColor^);
+		ygcPlayer(ygcMatch^, ygcStoneColor^, ygcPlayerInputType);
+		ygcPlayer(ygcMatch^, ygcStoneColor^, ygcPlayerInputType, String^);
 
-		bool takeMove(ygcBoard^, uint16_t, uint16_t);
-		void chatter(Platform::String^);
+		void initPlayer(ygcMatch^, ygcPlayerInputType);
 	};
 
-	public ref class ygcStoneChange sealed {
+	private ref class ygcRules sealed {
 
-	public:
-		ygcStoneColor^ whose;
-		ygcStoneStatus status;
-		uint16_t x;
-		uint16_t y;
-	};
-
-	public ref class ygcMove sealed {
-
-	public:
-		Vector<ygcStoneChange^> stonesChanged;
-	};
-
-	public ref class ygcRules sealed {
-
-	public:
+	internal:
 		std::list<moveValidator> validMoves;
 		std::list<postMoveAction> postMoves;
 	};
 
-	public ref class ygcMatch sealed {
+	private ref class ygcMatch {
 
-	public:
+	internal:
 		ygcBoard^ board;
 		Vector<ygcPlayer^>^ players;	// allowing for a custom number of players would cause an 
-									// unpleasant increase in sophistication of game logic; 
-									// suffer at your own discretion
+										// unpleasant increase in sophistication of game logic; 
+										// suffer at your own discretion
 
 		ygcRules^ matchRules;
 
-		ygcStoneColor^ turn;
+		ygcMatchState matchState;
+		uint16_t moveid;
 		Vector<ygcMove^>^ moveHistory;
+		ygcStoneColor^ turn;			// this might be superficial; TODO: think about it when your eyelids won't be so damn heavy
 
-		ygcMatch();							// default rules, i.e. Go on a 19x19 board
+		ygcMatch();
+		
+		bool matchMoveBack(unsigned int);
+		bool matchMoveForward(unsigned int);
+		bool matchMakeMove(uint16_t, uint16_t);
 
 	};
 

@@ -10,72 +10,107 @@ using namespace ygc;
 
 /* ygcMatch method implementation */
 
-ygcMatch::ygcMatch()
+ygcMatch::ygcMatch() : board(nullptr), turn(nullptr)
 {
-	board = ref new ygcBoard(Go19::Go19BoardWidth, Go19::Go19BoardHeight);
 	players = ref new Vector<ygcPlayer^>();
 
 	matchRules = ref new ygcRules();
-	for (auto i = 0; Go19::defaultMoveValidators[i]; ++i)
-		matchRules->validMoves.push_back(Go19::defaultMoveValidators[i]);
-	
-	for (auto i = 0; Go19::defaultPostMoveActions[i]; ++i)
-		matchRules->postMoves.push_back(Go19::defaultPostMoveActions[i]);
 
-	turn = ref new Go19::Go19StoneColor(Go19::Go19StoneColor::BLACK);
-
+	matchState = ygcMatchState::ACTIVE;
+	moveid = 0;
 	moveHistory = ref new Vector<ygcMove^>();
 }
 
 
+bool ygcMatch::matchMoveBack(unsigned int count)
+{
+	return true;
+}
+
+bool ygcMatch::matchMoveForward(unsigned int count)
+{
+	return true;
+}
+
+bool ygcMatch::matchMakeMove(uint16_t x, uint16_t y)
+{
+	for (auto f : matchRules->validMoves)
+		if (!f(board, x, y))
+			return false;
+
+	moveHistory->Append(ref new ygcMove());
+	moveHistory->GetAt(moveHistory->Size - 1)->stonesChanged.Append(ref new ygcStoneChange(this->turn, ygcStoneStatus::ADDED, x, y));
+
+	*board->getAt(x,y)->takenBy = *turn;
+
+	for (auto f : matchRules->postMoves)
+		f(board, x, y);
+
+	turn->increment();
+
+	moveid++;
+
+	return true;
+}
+
+/* ygcBoard method implementation */
+
+ygcBoard::ygcBoard(uint16_t sbw, uint16_t sbh) : sBoardWidth(sbw), sBoardHeight(sbh), moveHistory(nullptr)
+{
+	fields = ref new Array<Object^>(sBoardWidth);
+	for (auto i = 0; i < sBoardWidth; ++i) {
+		fields[i] = ref new Array<ygcField^>(sBoardHeight);
+		for (auto j = 0; j < sBoardHeight; ++j) {
+			((Array<ygcField^>^)fields[i])[j] = ref new ygcField();
+		}
+	}
+}
+
+ygcField^& ygcBoard::getAt(uint16_t x, uint16_t y) 
+{
+	return ((Array<ygcField^>^)fields[x])[y];
+}
+
 /* ygcPlayer method implementation */
 
-ygcPlayer::ygcPlayer(ygcStoneColor^ stonecolor)
+ygcPlayer::ygcPlayer(ygcMatch^ currentMatch, ygcStoneColor^ stonecolor)
 {
-	initPlayer(ygcPlayerInputType::DUMMY);
+	initPlayer(currentMatch, ygcPlayerInputType::DUMMY);
 
 	this->color = stonecolor;
 }
 
-ygcPlayer::ygcPlayer(ygcStoneColor^ stonecolor, ygcPlayerInputType ypiType)
+ygcPlayer::ygcPlayer(ygcMatch^ currentMatch, ygcStoneColor^ stonecolor, ygcPlayerInputType ypiType)
 {
-	initPlayer(ypiType);
+	initPlayer(currentMatch, ypiType);
 
 	this->color = stonecolor;
 }
 
-ygcPlayer::ygcPlayer(ygcStoneColor^ stonecolor, ygcPlayerInputType ypiType, Platform::String^ name)
+ygcPlayer::ygcPlayer(ygcMatch^ currentMatch, ygcStoneColor^ stonecolor, ygcPlayerInputType ypiType, Platform::String^ name)
 {
-	initPlayer(ypiType);
+	initPlayer(currentMatch, ypiType);
 
 	this->name = name;
 	this->color = stonecolor;
 }
 
-void ygcPlayer::initPlayer(ygcPlayerInputType ypiType)
+void ygcPlayer::initPlayer(ygcMatch^ currentMatch, ygcPlayerInputType ypiType)
 {
 	name = "Player";
 	stonesTaken = 0;
 	ready = false;
 	passed = false;
+	activeMatch = currentMatch;
 
 	switch (ypiType) {
 	case SCREEN:
 		inputHandler = ref new PlayerInput::ScreenInput();
+		ready = true;
 		break;
 	default:
 		break;
 	}
-}
 
-bool ygcPlayer::takeMove(uint16_t x, uint16_t y)
-{
-	ygcField^ field = (ygcField^)s;
-	Vector<ygcPlayer^>^ pvec = this->currentMatch->players;
-	Go19::Go19StoneColor^ gsc = static_cast<Go19::Go19StoneColor^>(this->currentMatch->turn);
-
-	
-
-
-	inputHandler->makeMove(b, x, y);
+	inputHandler->player = this;
 }
