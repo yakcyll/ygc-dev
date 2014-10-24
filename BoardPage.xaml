@@ -8,16 +8,62 @@
     mc:Ignorable="d"
     Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
 
-    <Grid x:Name="LayoutRoot">
-        <Grid.RowDefinitions>
-            <RowDefinition Height="100" />
+    <Canvas x:Name="LayoutRoot">
+        <!-- <Grid.RowDefinitions>
+            <RowDefinition Height="100"/>
             <RowDefinition Height="*" />
             <RowDefinition Height="100" />
-        </Grid.RowDefinitions>
+        </Grid.RowDefinitions> -->
+        <StackPanel Canvas.ZIndex="2" x:Name="OppPanel" Orientation="Horizontal"
+                    VerticalAlignment="Top" FlowDirection="RightToLeft">
+            <StackPanel.Background>
+                <SolidColorBrush Color="Black" Opacity="0.5" />
+            </StackPanel.Background>
+            <Border x:Name="OppPanelBorder" Padding="10">
+                <StackPanel x:Name="OppPanelCont" VerticalAlignment="Top">
+                </StackPanel>
+            </Border>
+        </StackPanel>
         
-        <TextBox Grid.Row="2" x:Name="TurnTextBox" Text="1" Margin="0,10,203,0"></TextBox>
-        <TextBox Grid.Row="2" x:Name="ResponsiveTextBox" Text="0" Margin="203,10,0,0"></TextBox>
-        <TextBox Grid.Row="2" x:Name="TapXTextBox" Margin="0,52,203,0"></TextBox>
-        <TextBox Grid.Row="2" x:Name="TapYTextBox" Margin="203,52,0,0"></TextBox>
-    </Grid>
+
+        <ScrollViewer x:Name="ScrollBoardView" Grid.Row="1" Background="DarkOrange" 
+                      ZoomMode="Enabled"
+                      HorizontalScrollBarVisibility="Visible"  VerticalScrollBarVisibility="Visible"
+                      HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
+                      HorizontalSnapPointsAlignment="Center" VerticalSnapPointsAlignment="Center"
+                      MinZoomFactor="1.0" MaxZoomFactor="3.0">
+        </ScrollViewer>
+
+        <StackPanel Canvas.ZIndex="2" x:Name="PlayerPanel" Orientation="Horizontal" 
+                    FlowDirection="RightToLeft" VerticalAlignment="Bottom"
+                    RenderTransformOrigin="0.5, 0.5">
+            <StackPanel.Background>
+                <SolidColorBrush Color="Black" Opacity="0.5" />
+            </StackPanel.Background>
+            <StackPanel.RenderTransform>
+                <RotateTransform Angle="180" />
+            </StackPanel.RenderTransform>
+            <StackPanel.Resources>
+                <Style TargetType="Border">
+                    <Setter Property="RenderTransform">
+                        <Setter.Value>
+                            <RotateTransform Angle="180"/>
+                        </Setter.Value>
+                    </Setter>
+                    <Setter Property="RenderTransformOrigin" Value="0.5, 0.5" />
+                </Style>
+            </StackPanel.Resources>
+
+            <Border x:Name="PlayerPanelBorder" Padding="10"
+                    VerticalAlignment="Bottom" HorizontalAlignment="Left">
+                <StackPanel x:Name="PlayerPanelCont">
+                </StackPanel>
+            </Border>
+        </StackPanel>
+        
+        <TextBox Visibility="Collapsed" x:Name="TurnTextBox" Text="1" Margin="0,10,203,0"></TextBox>
+        <TextBox Visibility="Collapsed" x:Name="ResponsiveTextBox" Text="0" Margin="203,10,0,0"></TextBox>
+        <TextBox Visibility="Collapsed" Grid.Row="2" x:Name="TapXTextBox" Margin="0,52,203,0"></TextBox>
+        <TextBox Visibility="Collapsed" Grid.Row="2" x:Name="TapYTextBox" Margin="203,52,0,0"></TextBox>
+    </Canvas>
 </Page>

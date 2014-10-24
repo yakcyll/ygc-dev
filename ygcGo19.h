@@ -26,11 +26,11 @@ namespace ygc {
 		const uint16_t Go19PlayerCount = 2;
 
 		const uint16_t Go19BoardHeight = 9;
-		const uint16_t Go19BoardWidth = 9;
+		const uint16_t Go19BoardWidth = 6;
 
 		bool bGo19_IsEmpty(ygcBoard^, uint16_t, uint16_t);
 		bool bGo19_HasLiberties(ygcBoard^, uint16_t, uint16_t);
-		void vGo19_SearchForPrisoners(ygcBoard^, uint16_t, uint16_t);
+		void vGo19_SearchForPrisoners(ygcMatch^, uint16_t, uint16_t);
 
 		const static moveValidator defaultMoveValidators[3] = { bGo19_IsEmpty, bGo19_HasLiberties, NULL };
 		const static postMoveAction defaultPostMoveActions[2] = { vGo19_SearchForPrisoners, NULL };

@@ -44,7 +44,7 @@ bool ygcMatch::matchMakeMove(uint16_t x, uint16_t y)
 	*board->getAt(x,y)->takenBy = *turn;
 
 	for (auto f : matchRules->postMoves)
-		f(board, x, y);
+		f(this, x, y);
 
 	turn->increment();
 

@@ -25,5 +25,6 @@ namespace ygc
 
 		void OnSuspending(Platform::Object^ sender, Windows::ApplicationModel::SuspendingEventArgs^ e);
 		void RootFrame_FirstNavigated(Platform::Object^ sender, Windows::UI::Xaml::Navigation::NavigationEventArgs^ e);
+		void AccessViolationHandler(Platform::Object^ sender, Windows::UI::Xaml::UnhandledExceptionEventArgs^ uee);
 	};
 }

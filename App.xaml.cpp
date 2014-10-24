@@ -33,6 +33,7 @@ App::App()
 {
 	InitializeComponent();
 	Suspending += ref new SuspendingEventHandler(this, &App::OnSuspending);
+	UnhandledException += ref new UnhandledExceptionEventHandler(this, &App::AccessViolationHandler);
 }
 
 /// <summary>
@@ -134,4 +135,9 @@ void App::OnSuspending(Object^ sender, SuspendingEventArgs^ e)
 	(void) e;		// Unused parameter
 
 	// TODO: Save application state and stop any background activity
+}
+
+void App::AccessViolationHandler(Object^ s, UnhandledExceptionEventArgs^ uee)
+{
+	OutputDebugString(L"Access Violation!");
 }

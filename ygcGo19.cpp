@@ -33,7 +33,7 @@ bool Go19::bGo19_HasLiberties(ygcBoard^, uint16_t, uint16_t)
 	return true;
 }
 
-void Go19::vGo19_SearchForPrisoners(ygcBoard^, uint16_t, uint16_t)
+void Go19::vGo19_SearchForPrisoners(ygcMatch^, uint16_t, uint16_t)
 {
 
 }

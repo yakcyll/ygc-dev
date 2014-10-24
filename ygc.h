@@ -22,7 +22,7 @@ namespace ygc {
 	ref class ygcMatch;
 
 	typedef bool(*moveValidator)(ygcBoard^, uint16_t, uint16_t);
-	typedef void(*postMoveAction)(ygcBoard^, uint16_t, uint16_t);
+	typedef void(*postMoveAction)(ygcMatch^, uint16_t, uint16_t);
 
 	enum ygcPlayerInputType { DUMMY, SCREEN, WIFI, BT, IGS, AI, SPEC };
 	enum ygcStoneStatus { ADDED, FALLEN };

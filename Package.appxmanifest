@@ -20,6 +20,11 @@
         <m3:DefaultTile Square71x71Logo="Assets\app_assets\ygc-tile-71x71.png">
         </m3:DefaultTile>
         <m3:SplashScreen Image="Assets\app_assets\ygc-tile-splash.png" />
+        <m3:InitialRotationPreference>
+          <m3:Rotation Preference="portrait" />
+          <m3:Rotation Preference="landscape" />
+          <m3:Rotation Preference="landscapeFlipped" />
+        </m3:InitialRotationPreference>
       </m3:VisualElements>
     </Application>
   </Applications>
