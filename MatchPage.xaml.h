@@ -19,12 +19,15 @@ namespace ygc
 	internal:
 		StackPanel ^ OppPanel, ^ PlayerPanel, ^ OppPanelCont, ^ PlayerPanelCont;
 		Border ^ OppPanelBorder, ^ PlayerPanelBorder;
+		Canvas ^ LayoutRoot;
 
 		BoardPage ^ bp;
 
 	public:
 		MatchPage();
 
+		void InitMatch();
+		void InitHandlers();
 		void InitScorePanels();
 
 	protected:

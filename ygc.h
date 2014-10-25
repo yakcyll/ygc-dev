@@ -91,7 +91,7 @@ namespace ygc {
 		Vector<ygcMove^>^ moveHistory;
 
 		ygcBoard(uint16_t, uint16_t);
-		ygcField^& getAt(uint16_t, uint16_t);
+		ygcField^& GetAt(uint16_t, uint16_t);
 	};
 
 	private ref class ygcPlayerInput abstract {

@@ -15,8 +15,8 @@ namespace ygc
 	public ref class BoardPage sealed
 	{
 	internal:
-		double ScorePanelWidth;
-		double sideMargin;
+		double PanelWidth;
+		double SideMargin;
 		double AppSpaceWidth;
 		double AppSpaceHeight;
 
@@ -24,13 +24,10 @@ namespace ygc
 		Canvas ^ LayoutRoot, ^ boardGrid;
 		ygcMatch ^ currentMatch;
 
-		void InitMatch();
 		void InitUI();
-		void InitBoardGrid();
 		void InitScrollViewer();
-		void InitScorePanels();
+		void InitBoardGrid();
 		void DrawBoardGrid();
-		void InitHandlers();
 
 		void UpdateScrollBoardViewScroll(Object^, SizeChangedEventArgs^);
 

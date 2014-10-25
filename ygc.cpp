@@ -41,7 +41,7 @@ bool ygcMatch::matchMakeMove(uint16_t x, uint16_t y)
 	moveHistory->Append(ref new ygcMove());
 	moveHistory->GetAt(moveHistory->Size - 1)->stonesChanged.Append(ref new ygcStoneChange(this->turn, ygcStoneStatus::ADDED, x, y));
 
-	*board->getAt(x,y)->takenBy = *turn;
+	*board->GetAt(x,y)->takenBy = *turn;
 
 	for (auto f : matchRules->postMoves)
 		f(this, x, y);
@@ -66,7 +66,7 @@ ygcBoard::ygcBoard(uint16_t sbw, uint16_t sbh) : sBoardWidth(sbw), sBoardHeight(
 	}
 }
 
-ygcField^& ygcBoard::getAt(uint16_t x, uint16_t y) 
+ygcField^& ygcBoard::GetAt(uint16_t x, uint16_t y) 
 {
 	return ((Array<ygcField^>^)fields[x])[y];
 }

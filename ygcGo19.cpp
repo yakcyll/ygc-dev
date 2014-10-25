@@ -23,7 +23,7 @@ Go19::Go19Match::Go19Match()
 
 bool Go19::bGo19_IsEmpty(ygcBoard^ b, uint16_t x, uint16_t y)
 {
-	if (*b->getAt(x,y)->takenBy != Go19StoneColor::EMPTY)
+	if (*b->GetAt(x,y)->takenBy != Go19StoneColor::EMPTY)
 		return false;
 	return true;
 }

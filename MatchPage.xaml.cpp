@@ -26,9 +26,63 @@ MatchPage::MatchPage()
 	InitializeComponent();
 
 	bp = ref new BoardPage(this);
-
+	LayoutRoot = (Canvas ^)this->Content;
+	
+	InitMatch();
+	bp->InitUI();
+	InitHandlers();
 	InitScorePanels();
 }
+
+void MatchPage::InitMatch()
+{
+	bp->currentMatch = ref new Go19::Go19Match();
+
+	bp->currentMatch->players->Append(ref new ygcPlayer(bp->currentMatch, ref new Go19::Go19StoneColor(Go19::Go19StoneColor::BLACK), ygcPlayerInputType::SCREEN, "Player1"));
+	bp->currentMatch->players->Append(ref new ygcPlayer(bp->currentMatch, ref new Go19::Go19StoneColor(Go19::Go19StoneColor::WHITE), ygcPlayerInputType::SCREEN, "Player2"));
+
+	for (auto i = 0; i < bp->currentMatch->board->sBoardWidth; ++i) {
+		for (auto j = 0; j < bp->currentMatch->board->sBoardHeight; ++j) {
+
+			ygcField^ field = ref new ygcField();
+			field->takenBy = ref new Go19::Go19StoneColor(Go19::Go19StoneColor::EMPTY);
+			field->x = i;
+			field->y = j;
+
+			bp->currentMatch->board->GetAt(i, j) = field;
+		}
+	}
+
+}
+
+void MatchPage::InitHandlers()
+{
+	for (unsigned int k = 0; k < bp->currentMatch->players->Size; ++k) {
+		if (bp->currentMatch->players->GetAt(k)->inputHandler->ypiType == ygcPlayerInputType::SCREEN) {
+			ygcPlayer^ pp = bp->currentMatch->players->GetAt(k);
+			bp->boardGrid->Tapped += ref new TappedEventHandler([this, pp](Object^ s, RoutedEventArgs^ e){
+
+				if (pp->inputHandler->handleInput(s, e)) {
+
+					Canvas^ c = (Canvas^)s;
+					TappedRoutedEventArgs^ te = (TappedRoutedEventArgs^)e;
+
+					Shapes::Ellipse^ stone = ref new Shapes::Ellipse();
+					stone->Fill = ref new SolidColorBrush(defaultAppSettings::defaultStoneColors[bp->currentMatch->turn->previous()]);
+					stone->Width = 0.9 * bp->SideMargin;
+					stone->Height = stone->Width;
+					stone->Stroke = ref new SolidColorBrush(Windows::UI::Colors::Black);
+					stone->StrokeThickness = 2.0f;
+
+					bp->boardGrid->Children->Append(stone);
+					bp->boardGrid->SetTop(stone, ::floor((te->GetPosition(c).Y - bp->SideMargin / 2.0f) / bp->SideMargin) * bp->SideMargin + bp->SideMargin / 2.0f);
+					bp->boardGrid->SetLeft(stone, ::floor((te->GetPosition(c).X - bp->SideMargin / 2.0f) / bp->SideMargin) * bp->SideMargin + bp->SideMargin / 2.0f);
+				}
+			});
+		}
+	}
+}
+
 
 void MatchPage::InitScorePanels()
 {
@@ -164,13 +218,13 @@ void MatchPage::OrientHandler(Object ^ s, SizeChangedEventArgs ^ sce)
 		OppPanelCont->Orientation = Orientation::Horizontal;
 		PlayerPanelCont->Orientation = Orientation::Horizontal;
 
-		OppPanel->Height = bp->ScorePanelWidth;
+		OppPanel->Height = bp->PanelWidth;
 		OppPanel->Width = bp->AppSpaceWidth;
-		PlayerPanel->Height = bp->ScorePanelWidth;
+		PlayerPanel->Height = bp->PanelWidth;
 		PlayerPanel->Width = bp->AppSpaceWidth;
 
-		bp->LayoutRoot->SetTop(PlayerPanel, bp->AppSpaceHeight - PlayerPanel->Height);
-		bp->LayoutRoot->SetLeft(PlayerPanel, 0.0);
+		LayoutRoot->SetTop(PlayerPanel, bp->AppSpaceHeight - PlayerPanel->Height);
+		LayoutRoot->SetLeft(PlayerPanel, 0.0);
 	}
 	else {
 
@@ -180,12 +234,11 @@ void MatchPage::OrientHandler(Object ^ s, SizeChangedEventArgs ^ sce)
 		PlayerPanelCont->Orientation = Orientation::Vertical;
 
 		OppPanel->Height = bp->AppSpaceHeight;
-		OppPanel->Width = bp->ScorePanelWidth;
+		OppPanel->Width = bp->PanelWidth;
 		PlayerPanel->Height = bp->AppSpaceHeight;
-		PlayerPanel->Width = bp->ScorePanelWidth;
+		PlayerPanel->Width = bp->PanelWidth;
 
-		bp->LayoutRoot->SetTop(PlayerPanel, 0.0);
-		bp->LayoutRoot->SetLeft(PlayerPanel, bp->AppSpaceWidth - PlayerPanel->Width);
-
+		LayoutRoot->SetTop(PlayerPanel, 0.0);
+		LayoutRoot->SetLeft(PlayerPanel, bp->AppSpaceWidth - PlayerPanel->Width);
 	}
 }

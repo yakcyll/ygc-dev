@@ -16,7 +16,26 @@ namespace ygc
 	public ref class EditorPage sealed
 	{
 	internal:
+		StackPanel ^ CounterPanel, ^ CPCont, ^ TPMode, ^ TPHistory;
+		Grid ^ ToolPanel;
+		Border ^ CounterPanelBorder, ^ TPModeBorder, ^TPHistoryBorder;
+		Canvas ^ LayoutRoot;
+
+		Array<TextBlock^>^ scoreTBs;
+		Array<uint16_t>^ playerScores;
+		uint16_t moveId, noPlayers;
+		ygcStoneColor ^ turn;
+		bool historyModeEnabled;
+		bool mixedStonesEnabled;
+
 		BoardPage ^ bp;
+
+		void InitBoard();
+		void InitPanels();
+		void InitInputHandler();
+
+		void RewindHistory();
+
 	public:
 		EditorPage();
 
