@@ -91,14 +91,17 @@
     </ClCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="BoardPage.h" />
+    <ClInclude Include="EditorPage.xaml.h">
+      <DependentUpon>EditorPage.xaml</DependentUpon>
+    </ClInclude>
+    <ClInclude Include="MatchPage.xaml.h">
+      <DependentUpon>MatchPage.xaml</DependentUpon>
+    </ClInclude>
     <ClInclude Include="pch.h" />
     <ClInclude Include="App.xaml.h">
       <DependentUpon>App.xaml</DependentUpon>
     </ClInclude>
-    <ClInclude Include="BoardPage.xaml.h">
-      <DependentUpon>BoardPage.xaml</DependentUpon>
-    </ClInclude>
-    <ClInclude Include="ReverseStackPanel.h" />
     <ClInclude Include="ygc.h" />
     <ClInclude Include="ygcDefaultSettings.h" />
     <ClInclude Include="ygcGo19.h" />
@@ -108,7 +111,10 @@
     <ApplicationDefinition Include="App.xaml">
       <SubType>Designer</SubType>
     </ApplicationDefinition>
-    <Page Include="BoardPage.xaml">
+    <Page Include="EditorPage.xaml">
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="MatchPage.xaml">
       <SubType>Designer</SubType>
     </Page>
   </ItemGroup>
@@ -133,8 +139,12 @@
     <ClCompile Include="App.xaml.cpp">
       <DependentUpon>App.xaml</DependentUpon>
     </ClCompile>
-    <ClCompile Include="BoardPage.xaml.cpp">
-      <DependentUpon>BoardPage.xaml</DependentUpon>
+    <ClCompile Include="BoardPage.cpp" />
+    <ClCompile Include="EditorPage.xaml.cpp">
+      <DependentUpon>EditorPage.xaml</DependentUpon>
+    </ClCompile>
+    <ClCompile Include="MatchPage.xaml.cpp">
+      <DependentUpon>MatchPage.xaml</DependentUpon>
     </ClCompile>
     <ClCompile Include="pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
@@ -142,7 +152,6 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|ARM'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|ARM'">Create</PrecompiledHeader>
     </ClCompile>
-    <ClCompile Include="ReverseStackPanel.cpp" />
     <ClCompile Include="ygc.cpp" />
     <ClCompile Include="ygcGo19.cpp" />
     <ClCompile Include="ygcInputScreen.cpp" />

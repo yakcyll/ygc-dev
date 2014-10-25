@@ -4,7 +4,7 @@
 //
 
 #include "pch.h"
-#include "BoardPage.xaml.h"
+#include "BoardPage.h"
 
 using namespace ygc;
 
@@ -22,19 +22,18 @@ using namespace Windows::UI::Xaml::Media;
 using namespace Windows::UI::Xaml::Navigation;
 using namespace Windows::UI::Xaml::Media::Imaging;
 
-const double BoardPage::ScorePanelWidth = 60.0;
-double BoardPage::AppSpaceWidth = 0;
-double BoardPage::AppSpaceHeight = 0;
-
-BoardPage::BoardPage()
+BoardPage::BoardPage(Page^ rootPage)
 {
-	InitializeComponent();
+	LayoutRoot = ref new Canvas();
+	rootPage->Content = LayoutRoot;
+	
+	AppSpaceWidth = 0.0;
+	AppSpaceHeight = 0.0;
+
 	InitMatch();
 	InitUI();
 	DrawBoardGrid();
 	InitHandlers();
-
-	SizeChanged += ref new SizeChangedEventHandler(this, &BoardPage::OrientHandler);
 }
 
 void BoardPage::InitMatch()
@@ -62,6 +61,7 @@ void BoardPage::InitUI()
 {
 	AppSpaceWidth = Window::Current->Bounds.Width;
 	AppSpaceHeight = Window::Current->Bounds.Height - 32 / Windows::Graphics::Display::DisplayInformation::GetForCurrentView()->RawPixelsPerViewPixel;
+	ScorePanelWidth = 60.0;
 
 	sideMargin = AppSpaceWidth / (currentMatch->board->sBoardWidth + 1); // TODO: Can we bound it to height in a nice fashion?
 
@@ -152,8 +152,6 @@ void BoardPage::InitHandlers()
 			ygcPlayer^ pp = this->currentMatch->players->GetAt(k);
 			boardGrid->Tapped += ref new TappedEventHandler([this, pp](Object^ s, RoutedEventArgs^ e){
 
-				this->debug((Canvas^)s, ((TappedRoutedEventArgs^)e)->GetPosition((Canvas^)s));
-
 				if (pp->inputHandler->handleInput(s, e)) {
 
 					Canvas^ c = (Canvas^)s;
@@ -176,20 +174,12 @@ void BoardPage::InitHandlers()
 	}
 }
 
-void BoardPage::debug(Canvas^ c, Point tapPoint) {
-	static unsigned int responsive = 0;
-	((TextBox^)LayoutRoot->FindName("TurnTextBox"))->Text = ActualWidth.ToString();
-	((TextBox^)LayoutRoot->FindName("ResponsiveTextBox"))->Text = ActualHeight.ToString();
-	((TextBox^)LayoutRoot->FindName("TapXTextBox"))->Text = (::floor((tapPoint.X - sideMargin / 2.0f) / sideMargin) * sideMargin + sideMargin / 2.0f).ToString() + " / " + uint16_t((tapPoint.X - sideMargin / 2.0f) / sideMargin);
-	((TextBox^)LayoutRoot->FindName("TapYTextBox"))->Text = (::floor((tapPoint.Y - sideMargin / 2.0f) / sideMargin) * sideMargin + sideMargin / 2.0f).ToString() + " / " + uint16_t((tapPoint.Y - sideMargin / 2.0f) / sideMargin);
-}
-
 /// <summary>
 /// Invoked when this page is about to be displayed in a Frame.
 /// </summary>
 /// <param name="e">Event data that describes how this page was reached.  The Parameter
 /// property is typically used to configure the page.</param>
-void BoardPage::OnNavigatedTo(NavigationEventArgs^ e)
+void BoardPage::BoardOnNavigatedTo(NavigationEventArgs^ e)
 {
 	(void) e;	// Unused parameter
 
@@ -223,9 +213,6 @@ void BoardPage::OnNavigatedTo(NavigationEventArgs^ e)
 
 	boardGrid->Background = ref new SolidColorBrush(Windows::UI::Colors::DarkBlue);
 
-	LayoutRoot->SetTop(OppPanel, 0.0);
-	LayoutRoot->SetLeft(OppPanel, 0.0);
-
 	// TODO: If your application contains multiple pages, ensure that you are
 	// handling the hardware Back button by registering for the
 	// Windows::Phone::UI::Input::HardwareButtons.BackPressed event.
@@ -233,12 +220,12 @@ void BoardPage::OnNavigatedTo(NavigationEventArgs^ e)
 	// this event is handled for you.
 }
 
-void BoardPage::OnNavigatedFrom(Windows::UI::Xaml::Navigation::NavigationEventArgs^ e)
+void BoardPage::BoardOnNavigatedFrom(Windows::UI::Xaml::Navigation::NavigationEventArgs^ e)
 {
 	//Windows::UI::ViewManagement::StatusBar::GetForCurrentView()->ShowAsync();
 }
 
-void BoardPage::OrientHandler(Object^ sender, SizeChangedEventArgs^ sce)
+void BoardPage::BoardOrientHandler(Object^ sender, SizeChangedEventArgs^ sce)
 {
 	boardGrid->Background = ref new SolidColorBrush(Windows::UI::Colors::DimGray);
 
@@ -247,39 +234,12 @@ void BoardPage::OrientHandler(Object^ sender, SizeChangedEventArgs^ sce)
 		AppSpaceHeight = Window::Current->Bounds.Height - 32 / Windows::Graphics::Display::DisplayInformation::GetForCurrentView()->RawPixelsPerViewPixel;
 
 		((RotateTransform^)boardGrid->RenderTransform)->Angle = 0.0f;
-
-		OppPanel->Orientation = Orientation::Horizontal;
-		PlayerPanel->Orientation = Orientation::Horizontal;
-		OppPanelCont->Orientation = Orientation::Horizontal;
-		PlayerPanelCont->Orientation = Orientation::Horizontal;
-
-		OppPanel->Height = ScorePanelWidth;
-		OppPanel->Width = AppSpaceWidth;
-		PlayerPanel->Height = ScorePanelWidth;
-		PlayerPanel->Width = AppSpaceWidth;
-
-		LayoutRoot->SetTop(PlayerPanel, AppSpaceHeight - PlayerPanel->Height);
-		LayoutRoot->SetLeft(PlayerPanel, 0.0);
 		
 	} else {
 		AppSpaceWidth = Window::Current->Bounds.Width - 72 / Windows::Graphics::Display::DisplayInformation::GetForCurrentView()->RawPixelsPerViewPixel;
 		AppSpaceHeight = Window::Current->Bounds.Height;
 
 		((RotateTransform^)boardGrid->RenderTransform)->Angle = 270.0f;
-
-		OppPanel->Orientation = Orientation::Vertical;
-		PlayerPanel->Orientation = Orientation::Vertical;
-		OppPanelCont->Orientation = Orientation::Vertical;
-		PlayerPanelCont->Orientation = Orientation::Vertical;
-
-		OppPanel->Height = AppSpaceHeight;
-		OppPanel->Width = ScorePanelWidth;
-		PlayerPanel->Height = AppSpaceHeight;
-		PlayerPanel->Width = ScorePanelWidth;
-
-		LayoutRoot->SetTop(PlayerPanel, 0.0);
-		LayoutRoot->SetLeft(PlayerPanel, AppSpaceWidth - PlayerPanel->Width);
-
 	}
 	ScrollBoardView->Height = AppSpaceHeight;
 	ScrollBoardView->Width = AppSpaceWidth;

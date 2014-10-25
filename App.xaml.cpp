@@ -4,7 +4,7 @@
 //
 
 #include "pch.h"
-#include "BoardPage.xaml.h"
+#include "EditorPage.xaml.h"
 
 using namespace ygc;
 
@@ -92,7 +92,7 @@ void App::OnLaunched(LaunchActivatedEventArgs^ e)
 		// When the navigation stack isn't restored navigate to the first page,
 		// configuring the new page by passing required information as a navigation
 		// parameter.
-		if (!rootFrame->Navigate(BoardPage::typeid, e->Arguments))
+		if (!rootFrame->Navigate(EditorPage::typeid, e->Arguments))
 		{
 			throw ref new FailureException("Failed to create initial page");
 		}

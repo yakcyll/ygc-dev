@@ -15,7 +15,7 @@ namespace ygc
 	/// <summary>
 	/// An empty page that can be used on its own or navigated to within a Frame.
 	/// </summary>
-	public ref class BoardPage sealed
+	public ref class BoardPage
 	{
 	private:
 		static const double ScorePanelWidth;
@@ -23,8 +23,9 @@ namespace ygc
 		static double AppSpaceWidth;
 		static double AppSpaceHeight;
 	internal:
-		Canvas^ boardGrid;
-		ygcMatch^ currentMatch;
+		ScrollViewer ^ ScrollBoardView;
+		Canvas ^ boardGrid;
+		ygcMatch ^ currentMatch;
 
 		SimpleOrientationSensor^ sos;
 
@@ -38,11 +39,9 @@ namespace ygc
 
 		void UpdateScrollBoardViewScroll(Object^, SizeChangedEventArgs^);
 
-	public:
-		BoardPage();
-		void debug(Canvas^ c, Point tapPoint);
-
 	protected:
+		BoardPage();
+
 		virtual void OnNavigatedTo(Windows::UI::Xaml::Navigation::NavigationEventArgs^ e) override;
 		virtual void OnNavigatedFrom(Windows::UI::Xaml::Navigation::NavigationEventArgs^ e) override;
 		void OrientHandler(Object^ sender, SizeChangedEventArgs^ sce);

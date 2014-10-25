@@ -25,7 +25,7 @@
     <ClCompile Include="ygcGo19.cpp" />
     <ClCompile Include="ygc.cpp" />
     <ClCompile Include="ygcInputScreen.cpp" />
-    <ClCompile Include="ReverseStackPanel.cpp" />
+    <ClCompile Include="BoardPage.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h" />
@@ -35,7 +35,7 @@
     <ClInclude Include="ygcGo19.h" />
     <ClInclude Include="ygcDefaultSettings.h" />
     <ClInclude Include="ygcInputScreen.h" />
-    <ClInclude Include="ReverseStackPanel.h" />
+    <ClInclude Include="BoardPage.h" />
   </ItemGroup>
   <ItemGroup>
     <AppxManifest Include="Package.appxmanifest" />
@@ -73,6 +73,7 @@
     </Image>
   </ItemGroup>
   <ItemGroup>
-    <Page Include="BoardPage.xaml" />
+    <Page Include="MatchPage.xaml" />
+    <Page Include="EditorPage.xaml" />
   </ItemGroup>
 </Project>
