@@ -26,6 +26,8 @@ BoardPage::BoardPage(Page^ rootPage)
 {
 	LayoutRoot = ref new Canvas();
 	rootPage->Content = LayoutRoot;
+
+	stonesOnCanvas = ref new Vector<Image^>();
 	
 	AppSpaceWidth = 0.0;
 	AppSpaceHeight = 0.0;
@@ -54,6 +56,10 @@ void BoardPage::InitBoardGrid()
 	boardGrid->HorizontalAlignment = Windows::UI::Xaml::HorizontalAlignment::Center;
 	boardGrid->VerticalAlignment = Windows::UI::Xaml::VerticalAlignment::Center;
 	boardGrid->Margin = Thickness(0);
+
+	boardGridBorder = ref new Border();
+	boardGridBorder->Padding = 2 * SideMargin;
+	boardGridBorder->Child = boardGrid;
 }
 
 void BoardPage::InitScrollViewer()
@@ -66,11 +72,11 @@ void BoardPage::InitScrollViewer()
 	ScrollBoardView->VerticalScrollBarVisibility = Windows::UI::Xaml::Controls::ScrollBarVisibility::Hidden;
 	ScrollBoardView->HorizontalContentAlignment = Windows::UI::Xaml::HorizontalAlignment::Center; 
 	ScrollBoardView->VerticalContentAlignment = Windows::UI::Xaml::VerticalAlignment::Center;
-	ScrollBoardView->MinZoomFactor = 1.0;
+	ScrollBoardView->MinZoomFactor = 0.5;
 	ScrollBoardView->MaxZoomFactor = 3.0;
 	ScrollBoardView->Background = ref new SolidColorBrush(Windows::UI::Colors::DarkOrange);
 
-	ScrollBoardView->Content = boardGrid;
+	ScrollBoardView->Content = boardGridBorder;
 	ScrollBoardView->Width = Window::Current->Bounds.Width;
 	ScrollBoardView->Height = Window::Current->Bounds.Height;
 	LayoutRoot->SetZIndex(ScrollBoardView, 1);
@@ -80,15 +86,20 @@ void BoardPage::InitScrollViewer()
 	((RotateTransform^)ScrollBoardView->RenderTransform)->CenterY = ScrollBoardView->Height / 2.0f;
 
 	ScrollBoardView->SizeChanged += ref new SizeChangedEventHandler(this, &BoardPage::UpdateScrollBoardViewScroll);
+	ScrollBoardView->Loaded += ref new RoutedEventHandler([this](Object ^ s, RoutedEventArgs ^ re){
+		double sw = ScrollBoardView->ScrollableWidth;
+		double sh = ScrollBoardView->ScrollableHeight;
+		ScrollBoardView->ChangeView(sw / 2.0, sh / 2.0, 1.0f);
+	});
 
 	LayoutRoot->Children->Append(ScrollBoardView);
 }
 
 void BoardPage::UpdateScrollBoardViewScroll(Object^ s, SizeChangedEventArgs^ e)
 {
-	double sw = ScrollBoardView->ScrollableWidth;
-	double sh = ScrollBoardView->ScrollableHeight;
-	ScrollBoardView->ChangeView(sw / 2.0, sh / 2.0, 1.0f);
+	double ov = ScrollBoardView->HorizontalOffset;
+	double oh = ScrollBoardView->ScrollableHeight - ScrollBoardView->VerticalOffset;
+	ScrollBoardView->ChangeView(ov, oh, ScrollBoardView->ZoomFactor);
 }
 
 void BoardPage::DrawBoardGrid()
@@ -120,6 +131,41 @@ void BoardPage::DrawBoardGrid()
 	}
 }
 
+void BoardPage::AddStone(ygcStoneColor^ turn, uint16_t x, uint16_t y)
+{
+	Image^ stone = ref new Image();
+	stone->Name = "Stone" + x.ToString() + "x" + y.ToString();
+	stone->Source = ref new BitmapImage(ref new Uri(defaultAppSettings::defaultStones[turn]));
+	stone->Width = 0.9 * SideMargin;
+	stone->Height = stone->Width;
+
+	boardGrid->Children->Append(stone);
+	boardGrid->SetZIndex(stone, 2);
+	boardGrid->SetTop(stone, SideMargin * (y + 1) - stone->Width / 2.0);
+	boardGrid->SetLeft(stone, SideMargin * (x + 1) - stone->Width / 2.0);
+	
+	stonesOnCanvas->Append(stone);
+
+	*currentMatch->board->GetAt(x, y)->takenBy = *turn;
+}
+
+bool BoardPage::RemoveStone(uint16_t x, uint16_t y)
+{
+	uint32_t stoneIndex;
+	for (auto stone : stonesOnCanvas) {
+		if (stone->Name == "Stone" + x.ToString() + "x" + y.ToString()) {
+			boardGrid->Children->IndexOf(stone, &stoneIndex);
+			boardGrid->Children->RemoveAt(stoneIndex);
+			stonesOnCanvas->IndexOf(stone, &stoneIndex);
+			stonesOnCanvas->RemoveAt(stoneIndex);
+
+			*currentMatch->board->GetAt(x, y)->takenBy = 0;
+			return true;
+		}
+	}
+	return false;
+}
+
 /// <summary>
 /// Invoked when this page is about to be displayed in a Frame.
 /// </summary>
@@ -149,15 +195,11 @@ void BoardPage::BoardOnNavigatedTo(NavigationEventArgs^ e)
 	AppSpaceWidth = Window::Current->Bounds.Width;
 	AppSpaceHeight = Window::Current->Bounds.Height - 32.0 / Windows::Graphics::Display::DisplayInformation::GetForCurrentView()->RawPixelsPerViewPixel;
 
-	//Windows::UI::ViewManagement::StatusBar::GetForCurrentView()->HideAsync();
-
 	boardGrid->Width = AppSpaceWidth;
 	boardGrid->Height = AppSpaceWidth * (currentMatch->board->sBoardHeight + 1) / double(currentMatch->board->sBoardWidth + 1);
 
 	((RotateTransform^)boardGrid->RenderTransform)->CenterX = boardGrid->Width / 2.0f;
 	((RotateTransform^)boardGrid->RenderTransform)->CenterY = boardGrid->Height / 2.0f;
-
-	boardGrid->Background = ref new SolidColorBrush(Windows::UI::Colors::DarkBlue);
 
 	// TODO: If your application contains multiple pages, ensure that you are
 	// handling the hardware Back button by registering for the
@@ -168,7 +210,7 @@ void BoardPage::BoardOnNavigatedTo(NavigationEventArgs^ e)
 
 void BoardPage::BoardOnNavigatedFrom(Windows::UI::Xaml::Navigation::NavigationEventArgs^ e)
 {
-	//Windows::UI::ViewManagement::StatusBar::GetForCurrentView()->ShowAsync();
+
 }
 
 void BoardPage::BoardOrientHandler(Object^ sender, SizeChangedEventArgs^ sce)
@@ -178,17 +220,18 @@ void BoardPage::BoardOrientHandler(Object^ sender, SizeChangedEventArgs^ sce)
 	if (Windows::UI::ViewManagement::ApplicationView::GetForCurrentView()->Orientation == Windows::UI::ViewManagement::ApplicationViewOrientation::Portrait) {
 		AppSpaceWidth = Window::Current->Bounds.Width;
 		AppSpaceHeight = Window::Current->Bounds.Height - 32 / Windows::Graphics::Display::DisplayInformation::GetForCurrentView()->RawPixelsPerViewPixel;
-		SideMargin = AppSpaceWidth / (currentMatch->board->sBoardWidth + 1); // TODO: Can we bound it to height in a nice fashion?
 
 		((RotateTransform^)boardGrid->RenderTransform)->Angle = 0.0f;
 		
 	} else {
 		AppSpaceWidth = Window::Current->Bounds.Width - 72 / Windows::Graphics::Display::DisplayInformation::GetForCurrentView()->RawPixelsPerViewPixel;
 		AppSpaceHeight = Window::Current->Bounds.Height;
-		SideMargin = AppSpaceHeight / (currentMatch->board->sBoardWidth + 1); // TODO: Can we bound it to height in a nice fashion?
 
 		((RotateTransform^)boardGrid->RenderTransform)->Angle = 270.0f;
 	}
+
+	SideMargin = AppSpaceWidth / (currentMatch->board->sBoardWidth + 1); // TODO: Can we bound it to height in a nice fashion?
+
 	ScrollBoardView->Height = AppSpaceHeight;
 	ScrollBoardView->Width = AppSpaceWidth;
 }

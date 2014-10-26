@@ -16,10 +16,12 @@ namespace ygc
 	public ref class EditorPage sealed
 	{
 	internal:
-		StackPanel ^ CounterPanel, ^ CPCont, ^ TPMode, ^ TPHistory;
-		Grid ^ ToolPanel;
-		Border ^ CounterPanelBorder, ^ TPModeBorder, ^TPHistoryBorder;
+		StackPanel ^ CounterPanel, ^ ToolPanel, ^ CPCount, ^CPInd, ^ TPMode, ^ TPHistory;
+		Grid ^ CPIndCont, ^ TPModeCont, ^ TPHistoryCont;
+		Border ^ CPCountBorder, ^CPIndBorder, ^ TPModeBorder, ^TPHistoryBorder;
 		Canvas ^ LayoutRoot;
+
+		Image ^ turnIndicator, ^ stoneBrush, ^ editMode, ^ hPrev, ^ hNext;
 
 		Array<TextBlock^>^ scoreTBs;
 		Array<uint16_t>^ playerScores;
@@ -34,6 +36,8 @@ namespace ygc
 		void InitPanels();
 		void InitInputHandler();
 
+		void UpdateIcons();
+		void UpdateBoard(ygcMove ^, bool);
 		void RewindHistory();
 
 	public:

@@ -18,6 +18,7 @@ using namespace Windows::UI::Xaml::Controls::Primitives;
 using namespace Windows::UI::Xaml::Data;
 using namespace Windows::UI::Xaml::Input;
 using namespace Windows::UI::Xaml::Media;
+using namespace Windows::UI::Xaml::Media::Imaging;
 using namespace Windows::UI::Xaml::Navigation;
 
 // The Blank Page item template is documented at http://go.microsoft.com/fwlink/?LinkId=390556
@@ -36,12 +37,14 @@ EditorPage::EditorPage() : historyModeEnabled(false), moveId(0), noPlayers(2), m
 	InitPanels();
 	InitInputHandler();
 
+	UpdateIcons();
+
 	SizeChanged += ref new SizeChangedEventHandler(this, &EditorPage::OrientHandler);
 }
 
 void EditorPage::InitBoard()
 {
-	bp->currentMatch = ref new Go19::Go19Match();
+	bp->currentMatch = ref new Go19::Go19Match(13, 13);
 
 	for (auto i = 0; i < bp->currentMatch->board->sBoardWidth; ++i) {
 		for (auto j = 0; j < bp->currentMatch->board->sBoardHeight; ++j) {
@@ -61,14 +64,21 @@ void EditorPage::InitBoard()
 void EditorPage::InitPanels()
 {
 	CounterPanel = ref new StackPanel();
-	CPCont = ref new StackPanel();
+	ToolPanel = ref new StackPanel();
+	CPInd = ref new StackPanel();
+	CPCount = ref new StackPanel();
 	TPMode = ref new StackPanel();
 	TPHistory = ref new StackPanel();
-	ToolPanel = ref new Grid();
-	CounterPanelBorder = ref new Border();
+	CPIndCont = ref new Grid();
+	TPModeCont = ref new Grid();
+	TPHistoryCont = ref new Grid();
+	CPCountBorder = ref new Border();
+	CPIndBorder = ref new Border();
 	TPModeBorder = ref new Border();
 	TPHistoryBorder = ref new Border();
 
+
+	// top panel
 	bp->LayoutRoot->Children->Append(CounterPanel);
 	bp->LayoutRoot->SetTop(CounterPanel, 0.0);
 	bp->LayoutRoot->SetLeft(CounterPanel, 0.0);
@@ -79,14 +89,20 @@ void EditorPage::InitPanels()
 	SolidColorBrush ^ scb = ref new SolidColorBrush(Windows::UI::Colors::Black);
 	scb->Opacity = 0.5;
 	CounterPanel->Background = scb;
-	ToolPanel->Background = scb;
 
-	CounterPanel->Children->Append(CounterPanelBorder);
+	CounterPanel->Children->Append(CPCountBorder);
+	CPCountBorder->Padding = 10.0;
+	CPCountBorder->Child = CPCount;
 
-	CounterPanelBorder->Padding = 10.0;
-
-	CounterPanelBorder->Child = CPCont;
-
+	CounterPanel->Children->Append(CPIndCont);
+	CPIndCont->RowDefinitions->Append(ref new RowDefinition());
+	CPIndCont->Children->Append(CPIndBorder);
+	CPIndCont->SetRow(CPIndBorder, 0);
+	CPIndCont->RowDefinitions->GetAt(0)->Height = GridLength(1, GridUnitType::Star);
+	CPIndBorder->Padding = 15.0;
+	CPIndBorder->Child = CPInd;
+	CPInd->Background = ref new SolidColorBrush(Windows::UI::Colors::Black);
+	CPInd->Background->Opacity = 0.5;
 
 	//init content
 	for (auto i = 0; i < noPlayers; ++i) {
@@ -110,9 +126,110 @@ void EditorPage::InitPanels()
 		s1->Margin = Thickness(10.0);
 
 		scoreTBs[i] = s1;
-		CPCont->Children->Append(e1);
-		CPCont->Children->Append(s1);
+		CPCount->Children->Append(e1);
+		CPCount->Children->Append(s1);
 	}
+
+	turnIndicator = ref new Image();
+	turnIndicator->Source = ref new BitmapImage(ref new Uri(defaultAppSettings::defaultEditIcons[turn]));
+	turnIndicator->Width = 30.0;
+	turnIndicator->Height = 30.0;
+
+	CPInd->Children->Append(turnIndicator);
+
+
+	//bottom panel
+	bp->LayoutRoot->Children->Append(ToolPanel);
+	bp->LayoutRoot->SetZIndex(ToolPanel, 2);
+
+	ToolPanel->Background = scb;
+	ToolPanel->FlowDirection = Windows::UI::Xaml::FlowDirection::RightToLeft;
+
+	ToolPanel->Children->Append(TPHistoryCont);
+	TPHistoryCont->RowDefinitions->Append(ref new RowDefinition());
+	TPHistoryCont->RowDefinitions->GetAt(0)->Height = GridLength(1, GridUnitType::Star);
+	TPHistoryCont->Children->Append(TPHistory);
+	TPHistoryCont->SetRow(TPHistory, 0);
+	TPHistory->FlowDirection = Windows::UI::Xaml::FlowDirection::LeftToRight;
+
+	ToolPanel->Children->Append(TPModeCont);
+	TPModeCont->RowDefinitions->Append(ref new RowDefinition());
+	TPModeCont->RowDefinitions->GetAt(0)->Height = GridLength(1, GridUnitType::Star);
+	TPModeCont->Children->Append(TPMode);
+	TPModeCont->SetRow(TPMode, 0);
+	TPMode->FlowDirection = Windows::UI::Xaml::FlowDirection::LeftToRight;
+
+	//init content
+	stoneBrush = ref new Image();
+	stoneBrush->Source = ref new BitmapImage(ref new Uri(defaultAppSettings::defaultEditIcons[0]));
+	stoneBrush->Width = bp->PanelWidth;
+	stoneBrush->Height = bp->PanelWidth;
+
+	stoneBrush->Tapped += ref new TappedEventHandler([this](Object^ s, TappedRoutedEventArgs^ e){
+		if (historyModeEnabled)
+			return;
+		if (mixedStonesEnabled)
+			mixedStonesEnabled = false;
+		else {
+			turn->increment();
+			if (*turn == 1)
+				mixedStonesEnabled = true;
+		}
+		this->UpdateIcons();
+	});
+
+	editMode = ref new Image();
+	editMode->Source = ref new BitmapImage(ref new Uri(defaultAppSettings::defaultModeIcons[0]));
+	editMode->Width = bp->PanelWidth;
+	editMode->Height = bp->PanelWidth;
+
+	editMode->Tapped += ref new TappedEventHandler([this](Object^ s, TappedRoutedEventArgs^ e){
+		if (historyModeEnabled)
+			RewindHistory();
+
+		historyModeEnabled = !historyModeEnabled;
+		this->UpdateIcons();
+	});
+
+	TPMode->Children->Append(stoneBrush);
+	TPMode->Children->Append(editMode);
+
+	hPrev = ref new Image();
+	hPrev->Source = ref new BitmapImage(ref new Uri(defaultAppSettings::defaultEditNavIcons[0]));
+	hPrev->Width = bp->PanelWidth;
+	hPrev->Height = bp->PanelWidth;
+
+	hPrev->Tapped += ref new TappedEventHandler([this](Object^ s, TappedRoutedEventArgs^ te){
+		if (!historyModeEnabled || moveId == 0)
+			return;
+
+		--moveId;
+		ygcMove^ lastMove = bp->currentMatch->moveHistory->GetAt(moveId);
+		UpdateBoard(lastMove, false);
+
+		*turn = turn->previous();
+		UpdateIcons();
+	});
+	
+	hNext = ref new Image();
+	hNext->Source = ref new BitmapImage(ref new Uri(defaultAppSettings::defaultEditNavIcons[1]));
+	hNext->Width = bp->PanelWidth;
+	hNext->Height = bp->PanelWidth;
+
+	hNext->Tapped += ref new TappedEventHandler([this](Object^ s, TappedRoutedEventArgs^ e){
+		if (!historyModeEnabled || moveId == bp->currentMatch->moveHistory->Size)
+			return;
+
+		ygcMove^ lastMove = bp->currentMatch->moveHistory->GetAt(moveId);
+		UpdateBoard(lastMove, true);
+		++moveId;
+
+		turn->increment();
+		UpdateIcons();
+	});
+
+	TPHistory->Children->Append(hPrev);
+	TPHistory->Children->Append(hNext);
 }
 
 void EditorPage::InitInputHandler()
@@ -123,72 +240,124 @@ void EditorPage::InitInputHandler()
 		TappedRoutedEventArgs^ te = (TappedRoutedEventArgs^)e;
 		Point tapPoint = te->GetPosition(c);
 
-		ygcBoard^ board = this->bp->currentMatch->board;
+		ygcBoard^ board = bp->currentMatch->board;
 		float SideMargin = float(c->Width > c->Height ? c->Width / float(board->sBoardWidth + 1) : c->Height / float(board->sBoardHeight + 1));
 
 		if (tapPoint.X < SideMargin / 2.0f || tapPoint.X > c->Width - SideMargin / 2.0f ||
 			tapPoint.Y < SideMargin / 2.0f || tapPoint.Y > c->Height - SideMargin / 2.0f)
 			return;
 
-		uint16_t x = uint16_t((tapPoint.X - SideMargin / 2.0f) / SideMargin);
-		uint16_t y = uint16_t((tapPoint.Y - SideMargin / 2.0f) / SideMargin);
+		uint16_t x = uint16_t(::round(tapPoint.X / SideMargin) - 1.0);
+		uint16_t y = uint16_t(::round(tapPoint.Y / SideMargin) - 1.0);
 
 		if (*board->GetAt(x,y)->takenBy == 0) {
-			Shapes::Ellipse^ stone = ref new Shapes::Ellipse();
-			stone->Name = "Stone" + x.ToString() + "x" + y.ToString();
-			stone->Fill = ref new SolidColorBrush(defaultAppSettings::defaultStoneColors[turn]);
-			stone->Width = 0.9 * bp->SideMargin;
-			stone->Height = stone->Width;
-			stone->Stroke = ref new SolidColorBrush(Windows::UI::Colors::Black);
-			stone->StrokeThickness = 2.0f;
 
-			bp->boardGrid->Children->Append(stone);
-			bp->boardGrid->SetTop(stone, ::floor((te->GetPosition(c).Y - bp->SideMargin / 2.0f) / bp->SideMargin) * bp->SideMargin + bp->SideMargin / 2.0f);
-			bp->boardGrid->SetLeft(stone, ::floor((te->GetPosition(c).X - bp->SideMargin / 2.0f) / bp->SideMargin) * bp->SideMargin + bp->SideMargin / 2.0f);
-
-			*board->GetAt(x, y)->takenBy = *turn;
+			bp->AddStone(turn, x, y);
 
 			if (historyModeEnabled) {
+				if (bp->currentMatch->moveHistory->Size != moveId) {
+					while (bp->currentMatch->moveHistory->Size != moveId)
+						bp->currentMatch->moveHistory->RemoveAtEnd();
+					UpdateIcons();
+				}
+
+				hPrev->Opacity = 1.0;
+
 				ygcMove ^ move = ref new ygcMove();
-				move->stonesChanged.Append(ref new ygcStoneChange(this->turn, ygcStoneStatus::ADDED, x, y));
+				move->stonesChanged.Append(ref new ygcStoneChange(ref new ygcStoneColor(*turn), ygcStoneStatus::ADDED, x, y));
 				bp->currentMatch->moveHistory->Append(move);
+				++moveId;
+				
 			}
 
-			++playerScores[(int)turn - 1];
-			scoreTBs[(int)turn - 1]->Text = playerScores[(int)turn - 1].ToString();
+			uint16_t playerIndex = (int)turn - 1;
+			++playerScores[playerIndex];
+			scoreTBs[playerIndex]->Text = playerScores[playerIndex].ToString();
 
-			if (historyModeEnabled || mixedStonesEnabled)
+			if (historyModeEnabled || mixedStonesEnabled) {
 				turn->increment();
-
-			moveId++;
+				turnIndicator->Source = ref new BitmapImage(ref new Uri(defaultAppSettings::defaultEditIcons[turn]));
+			}
 
 		}
 		else {
 			if (historyModeEnabled)
 				return;
 
-			Shapes::Ellipse^ stone;
-			uint32_t index;
-			for (auto i = bp->boardGrid->Children->First(); i->HasCurrent; i->MoveNext()) {
-				UIElement ^ child = i->Current;
-				try {
-					Shapes::Ellipse^ ell = dynamic_cast<Shapes::Ellipse^>(child);
-					if (ell == nullptr) continue;
-					if (ell->Name == "Stone" + x.ToString() + "x" + y.ToString()) {
-						bp->boardGrid->Children->IndexOf(ell, &index);
-						bp->boardGrid->Children->RemoveAt(index);
-						uint16_t index = (int)*bp->currentMatch->board->GetAt(x, y)->takenBy - 1;
-						--playerScores[index];
-						scoreTBs[index]->Text = playerScores[index].ToString();
-						*bp->currentMatch->board->GetAt(x, y)->takenBy = 0;
-						break;
-					}
-				}
-				catch (Exception^ ex) { /* ... */ }
-			}
+			uint16_t playerIndex = (int)*bp->currentMatch->board->GetAt(x, y)->takenBy - 1;
+
+			bp->RemoveStone(x, y);
+
+			--playerScores[playerIndex];
+			scoreTBs[playerIndex]->Text = playerScores[playerIndex].ToString();
 		}
 	});
 }
+
+void EditorPage::UpdateIcons()
+{
+	turnIndicator->Source = ref new BitmapImage(ref new Uri(defaultAppSettings::defaultEditIcons[turn]));
+	editMode->Source = ref new BitmapImage(ref new Uri(defaultAppSettings::defaultModeIcons[(int)historyModeEnabled]));
+
+	if (historyModeEnabled) {
+		stoneBrush->Opacity = 0.5;
+
+		//silly looking bit, but has to cover 0 == bp->currentMatch->moveHistory->Size
+		if (moveId == bp->currentMatch->moveHistory->Size)
+			hNext->Opacity = 0.5;
+		else
+			hNext->Opacity = 1.0;
+		if (moveId == 0)
+			hPrev->Opacity = 0.5;
+		else
+			hPrev->Opacity = 1.0;
+
+	}
+	else {
+		stoneBrush->Opacity = 1.0;
+		hNext->Opacity = 0.5;
+		hPrev->Opacity = 0.5;
+	}
+
+	if (mixedStonesEnabled)
+		stoneBrush->Source = ref new BitmapImage(ref new Uri(defaultAppSettings::defaultEditIcons[0]));
+	else
+		stoneBrush->Source = ref new BitmapImage(ref new Uri(defaultAppSettings::defaultEditIcons[turn]));
+	
+}
+
+void EditorPage::UpdateBoard(ygcMove^ lastMove, bool forward)
+{
+	// O(n*m)
+	// TODO: find a less complex alternative
+	for (auto i = lastMove->stonesChanged.First(); i->HasCurrent; i->MoveNext()) {
+		uint16_t playerIndex = (int)*i->Current->whose - 1;
+
+		if ((i->Current->status == ygcStoneStatus::ADDED && !forward) || (i->Current->status == ygcStoneStatus::FALLEN && forward)) {
+			//remove
+			bp->RemoveStone(i->Current->x, i->Current->y);
+			--playerScores[playerIndex];
+		}
+		else if ((i->Current->status == ygcStoneStatus::ADDED && forward) || (i->Current->status == ygcStoneStatus::FALLEN && !forward)) {
+			// add
+			bp->AddStone(i->Current->whose, i->Current->x, i->Current->y);
+			++playerScores[playerIndex];
+		}
+		scoreTBs[playerIndex]->Text = playerScores[playerIndex].ToString();
+	}
+}
+
+void EditorPage::RewindHistory()
+{
+	while (moveId) {
+		--moveId;
+		ygcMove^ lastMove = bp->currentMatch->moveHistory->GetAt(moveId);
+		UpdateBoard(lastMove, false);
+	}
+
+	bp->currentMatch->moveHistory->Clear();
+}
+
 
 /// <summary>
 /// Invoked when this page is about to be displayed in a Frame.
@@ -209,16 +378,66 @@ void EditorPage::OrientHandler(Object ^ s, SizeChangedEventArgs ^ sce)
 
 	if (Windows::UI::ViewManagement::ApplicationView::GetForCurrentView()->Orientation == Windows::UI::ViewManagement::ApplicationViewOrientation::Portrait) {
 		CounterPanel->Orientation = Orientation::Horizontal;
-		CPCont->Orientation = Orientation::Horizontal;
+		CPCount->Orientation = Orientation::Horizontal;
 
 		CounterPanel->Height = bp->PanelWidth;
-		CounterPanel->Width = Window::Current->Bounds.Width;
+		CounterPanel->Width = bp->AppSpaceWidth;
+		CPCountBorder->Width = (bp->AppSpaceWidth / 2);
+		CPCountBorder->Height = bp->PanelWidth;
+		CPIndCont->Width = (bp->AppSpaceWidth / 2);
+		CPIndCont->Height = bp->PanelWidth;
+		CPInd->VerticalAlignment = Windows::UI::Xaml::VerticalAlignment::Center;
+		CPInd->HorizontalAlignment = Windows::UI::Xaml::HorizontalAlignment::Right;
+
+		ToolPanel->Height = bp->PanelWidth;
+		ToolPanel->Width = bp->AppSpaceWidth;
+		ToolPanel->Orientation = Orientation::Horizontal;
+
+		bp->LayoutRoot->SetTop(ToolPanel, bp->AppSpaceHeight - bp->PanelWidth);
+		bp->LayoutRoot->SetLeft(ToolPanel, 0.0);
+
+		TPMode->Orientation = Orientation::Horizontal;
+		TPHistory->Orientation = Orientation::Horizontal;
+		TPModeCont->Width = (bp->AppSpaceWidth / 2);
+		TPModeCont->Height = bp->PanelWidth;
+		TPHistoryCont->Width = (bp->AppSpaceWidth / 2);
+		TPHistoryCont->Height = bp->PanelWidth;
+
+		TPMode->VerticalAlignment = Windows::UI::Xaml::VerticalAlignment::Center;
+		TPMode->HorizontalAlignment = Windows::UI::Xaml::HorizontalAlignment::Right;
+		TPHistory->VerticalAlignment = Windows::UI::Xaml::VerticalAlignment::Center;
+		TPHistory->HorizontalAlignment = Windows::UI::Xaml::HorizontalAlignment::Left;
 	}
 	else {
 		CounterPanel->Orientation = Orientation::Vertical;
-		CPCont->Orientation = Orientation::Vertical;
+		CPCount->Orientation = Orientation::Vertical;
 
-		CounterPanel->Height = Window::Current->Bounds.Height;
+		CounterPanel->Height = bp->AppSpaceHeight;
 		CounterPanel->Width = bp->PanelWidth;
+		CPCountBorder->Width = bp->PanelWidth;
+		CPCountBorder->Height = (bp->AppSpaceHeight / 2);
+		CPIndCont->Width = bp->PanelWidth;
+		CPIndCont->Height = (bp->AppSpaceHeight / 2); 
+		CPInd->VerticalAlignment = Windows::UI::Xaml::VerticalAlignment::Bottom;
+		CPInd->HorizontalAlignment = Windows::UI::Xaml::HorizontalAlignment::Center;
+
+		ToolPanel->Height = bp->AppSpaceHeight;
+		ToolPanel->Width = bp->PanelWidth;
+		ToolPanel->Orientation = Orientation::Vertical;
+
+		bp->LayoutRoot->SetTop(ToolPanel, 0.0);
+		bp->LayoutRoot->SetLeft(ToolPanel, bp->AppSpaceWidth - bp->PanelWidth);
+
+		TPMode->Orientation = Orientation::Vertical;
+		TPHistory->Orientation = Orientation::Vertical;
+		TPModeCont->Width = bp->PanelWidth;
+		TPModeCont->Height = (bp->AppSpaceHeight / 2);
+		TPHistoryCont->Width = bp->PanelWidth;
+		TPHistoryCont->Height = (bp->AppSpaceHeight / 2);
+
+		TPMode->VerticalAlignment = Windows::UI::Xaml::VerticalAlignment::Bottom;
+		TPMode->HorizontalAlignment = Windows::UI::Xaml::HorizontalAlignment::Center;
+		TPHistory->VerticalAlignment = Windows::UI::Xaml::VerticalAlignment::Top;
+		TPHistory->HorizontalAlignment = Windows::UI::Xaml::HorizontalAlignment::Center;
 	}
 }

@@ -22,12 +22,17 @@ namespace ygc
 
 		ScrollViewer ^ ScrollBoardView;
 		Canvas ^ LayoutRoot, ^ boardGrid;
+		Border ^ boardGridBorder;
+		Vector<Image^>^ stonesOnCanvas;
 		ygcMatch ^ currentMatch;
 
 		void InitUI();
 		void InitScrollViewer();
 		void InitBoardGrid();
 		void DrawBoardGrid();
+
+		void AddStone(ygcStoneColor^, uint16_t, uint16_t);
+		bool RemoveStone(uint16_t, uint16_t);
 
 		void UpdateScrollBoardViewScroll(Object^, SizeChangedEventArgs^);
 

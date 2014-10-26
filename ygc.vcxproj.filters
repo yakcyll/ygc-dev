@@ -21,21 +21,23 @@
   <ItemGroup>
     <ClCompile Include="App.xaml.cpp" />
     <ClCompile Include="pch.cpp" />
-    <ClCompile Include="BoardPage.xaml.cpp" />
     <ClCompile Include="ygcGo19.cpp" />
     <ClCompile Include="ygc.cpp" />
     <ClCompile Include="ygcInputScreen.cpp" />
     <ClCompile Include="BoardPage.cpp" />
+    <ClCompile Include="EditorPage.xaml.cpp" />
+    <ClCompile Include="MatchPage.xaml.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h" />
     <ClInclude Include="App.xaml.h" />
     <ClInclude Include="ygc.h" />
-    <ClInclude Include="BoardPage.xaml.h" />
     <ClInclude Include="ygcGo19.h" />
     <ClInclude Include="ygcDefaultSettings.h" />
     <ClInclude Include="ygcInputScreen.h" />
     <ClInclude Include="BoardPage.h" />
+    <ClInclude Include="EditorPage.xaml.h" />
+    <ClInclude Include="MatchPage.xaml.h" />
   </ItemGroup>
   <ItemGroup>
     <AppxManifest Include="Package.appxmanifest" />
@@ -70,6 +72,27 @@
     </Image>
     <Image Include="Assets\app_assets\ygc-tile-store.png">
       <Filter>Assets\app_assets</Filter>
+    </Image>
+    <Image Include="Assets\board_assets\ygc-edit-stone-black.png">
+      <Filter>Assets\board_assets</Filter>
+    </Image>
+    <Image Include="Assets\board_assets\ygc-edit-stone-both.png">
+      <Filter>Assets\board_assets</Filter>
+    </Image>
+    <Image Include="Assets\board_assets\ygc-edit-stone-white.png">
+      <Filter>Assets\board_assets</Filter>
+    </Image>
+    <Image Include="Assets\board_assets\appbar.control.play.png">
+      <Filter>Assets\board_assets</Filter>
+    </Image>
+    <Image Include="Assets\board_assets\appbar.edit.png">
+      <Filter>Assets\board_assets</Filter>
+    </Image>
+    <Image Include="Assets\board_assets\appbar.navigate.next.png">
+      <Filter>Assets\board_assets</Filter>
+    </Image>
+    <Image Include="Assets\board_assets\appbar.navigate.previous.png">
+      <Filter>Assets\board_assets</Filter>
     </Image>
   </ItemGroup>
   <ItemGroup>

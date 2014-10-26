@@ -7,9 +7,9 @@
 
 using namespace ygc;
 
-Go19::Go19Match::Go19Match()
+Go19::Go19Match::Go19Match(uint16_t width, uint16_t height)
 {
-	board = ref new ygcBoard(Go19::Go19BoardWidth, Go19::Go19BoardHeight);
+	board = ref new ygcBoard(width, height);
 	board->moveHistory = moveHistory;
 
 	for (auto i = 0; Go19::defaultMoveValidators[i]; ++i)

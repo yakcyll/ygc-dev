@@ -131,7 +131,14 @@
     <Image Include="Assets\app_assets\ygc-tile-71x71.png" />
     <Image Include="Assets\app_assets\ygc-tile-splash.png" />
     <Image Include="Assets\app_assets\ygc-tile-store.png" />
+    <Image Include="Assets\board_assets\appbar.control.play.png" />
+    <Image Include="Assets\board_assets\appbar.edit.png" />
+    <Image Include="Assets\board_assets\appbar.navigate.next.png" />
+    <Image Include="Assets\board_assets\appbar.navigate.previous.png" />
     <Image Include="Assets\board_assets\avatar_small.jpg" />
+    <Image Include="Assets\board_assets\ygc-edit-stone-black.png" />
+    <Image Include="Assets\board_assets\ygc-edit-stone-both.png" />
+    <Image Include="Assets\board_assets\ygc-edit-stone-white.png" />
     <Image Include="Assets\board_assets\ygc-stone-black.png" />
     <Image Include="Assets\board_assets\ygc-stone-white.png" />
   </ItemGroup>

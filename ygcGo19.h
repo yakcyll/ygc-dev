@@ -25,8 +25,8 @@ namespace ygc {
 
 		const uint16_t Go19PlayerCount = 2;
 
-		const uint16_t Go19BoardHeight = 9;
-		const uint16_t Go19BoardWidth = 6;
+		const uint16_t Go19BoardHeight = 19;
+		const uint16_t Go19BoardWidth = 19;
 
 		bool bGo19_IsEmpty(ygcBoard^, uint16_t, uint16_t);
 		bool bGo19_HasLiberties(ygcBoard^, uint16_t, uint16_t);
@@ -38,7 +38,7 @@ namespace ygc {
 		private ref class Go19Match : public ygcMatch {
 
 		internal:
-			Go19Match();
+			Go19Match(uint16_t width = Go19::Go19BoardWidth, uint16_t height = Go19::Go19BoardHeight);
 		};
 
 	};
