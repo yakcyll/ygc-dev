@@ -220,17 +220,17 @@ void BoardPage::BoardOrientHandler(Object^ sender, SizeChangedEventArgs^ sce)
 	if (Windows::UI::ViewManagement::ApplicationView::GetForCurrentView()->Orientation == Windows::UI::ViewManagement::ApplicationViewOrientation::Portrait) {
 		AppSpaceWidth = Window::Current->Bounds.Width;
 		AppSpaceHeight = Window::Current->Bounds.Height - 32 / Windows::Graphics::Display::DisplayInformation::GetForCurrentView()->RawPixelsPerViewPixel;
+		SideMargin = AppSpaceWidth / (currentMatch->board->sBoardWidth + 1); // TODO: Can we bound it to height in a nice fashion?
 
 		((RotateTransform^)boardGrid->RenderTransform)->Angle = 0.0f;
 		
 	} else {
 		AppSpaceWidth = Window::Current->Bounds.Width - 72 / Windows::Graphics::Display::DisplayInformation::GetForCurrentView()->RawPixelsPerViewPixel;
 		AppSpaceHeight = Window::Current->Bounds.Height;
+		SideMargin = AppSpaceHeight / (currentMatch->board->sBoardWidth + 1); // TODO: Can we bound it to height in a nice fashion?
 
 		((RotateTransform^)boardGrid->RenderTransform)->Angle = 270.0f;
 	}
-
-	SideMargin = AppSpaceWidth / (currentMatch->board->sBoardWidth + 1); // TODO: Can we bound it to height in a nice fashion?
 
 	ScrollBoardView->Height = AppSpaceHeight;
 	ScrollBoardView->Width = AppSpaceWidth;
