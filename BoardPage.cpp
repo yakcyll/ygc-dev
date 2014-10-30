@@ -86,7 +86,6 @@ void BoardPage::InitScrollViewer()
 	((RotateTransform^)ScrollBoardView->RenderTransform)->CenterX = ScrollBoardView->Width / 2.0f;
 	((RotateTransform^)ScrollBoardView->RenderTransform)->CenterY = ScrollBoardView->Height / 2.0f;
 
-	ScrollBoardView->SizeChanged += ref new SizeChangedEventHandler(this, &BoardPage::UpdateScrollBoardViewScroll);
 	ScrollBoardView->Loaded += ref new RoutedEventHandler([this](Object ^ s, RoutedEventArgs ^ re){
 		double sw = ScrollBoardView->ScrollableWidth;
 		double sh = ScrollBoardView->ScrollableHeight;
@@ -94,13 +93,6 @@ void BoardPage::InitScrollViewer()
 	});
 
 	LayoutRoot->Children->Append(ScrollBoardView);
-}
-
-void BoardPage::UpdateScrollBoardViewScroll(Object^ s, SizeChangedEventArgs^ e)
-{
-	double ov = ScrollBoardView->VerticalOffset;
-	double oh = ScrollBoardView->ScrollableWidth - ScrollBoardView->HorizontalOffset;
-	//ScrollBoardView->ChangeView(ov, oh, ScrollBoardView->ZoomFactor);
 }
 
 void BoardPage::DrawBoardGrid()
@@ -238,16 +230,13 @@ void BoardPage::BoardOrientHandler(Object^ sender, SizeChangedEventArgs^ sce)
 	if (Windows::UI::ViewManagement::ApplicationView::GetForCurrentView()->Orientation == Windows::UI::ViewManagement::ApplicationViewOrientation::Portrait) {
 		AppSpaceWidth = Window::Current->Bounds.Width;
 		AppSpaceHeight = Window::Current->Bounds.Height - 32 / Windows::Graphics::Display::DisplayInformation::GetForCurrentView()->RawPixelsPerViewPixel;
-		SideMargin = AppSpaceWidth / (currentMatch->board->sBoardWidth + 1); // TODO: Can we bound it to height in a nice fashion?
-
-		((RotateTransform^)boardGrid->RenderTransform)->Angle = 0.0f;
+		SideMargin = AppSpaceWidth / (currentMatch->board->sBoardWidth + 1); // TODO: Can we have it bound to height in a nice fashion?
 		
 	} else {
 		AppSpaceWidth = Window::Current->Bounds.Width - 72 / Windows::Graphics::Display::DisplayInformation::GetForCurrentView()->RawPixelsPerViewPixel;
 		AppSpaceHeight = Window::Current->Bounds.Height;
-		SideMargin = AppSpaceHeight / (currentMatch->board->sBoardWidth + 1); // TODO: Can we bound it to height in a nice fashion?
+		SideMargin = AppSpaceHeight / (currentMatch->board->sBoardWidth + 1);
 
-		((RotateTransform^)boardGrid->RenderTransform)->Angle = 270.0f;
 	}
 
 	ScrollBoardView->Height = AppSpaceHeight;
