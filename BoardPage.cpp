@@ -28,6 +28,7 @@ BoardPage::BoardPage(Page^ rootPage)
 	rootPage->Content = LayoutRoot;
 
 	stonesOnCanvas = ref new Vector<Image^>();
+	stonesCoordinates = ref new Vector<pair<uint16_t, uint16_t>^>();
 	
 	AppSpaceWidth = 0.0;
 	AppSpaceHeight = 0.0;
@@ -140,30 +141,47 @@ void BoardPage::AddStone(ygcStoneColor^ turn, uint16_t x, uint16_t y)
 	stone->Height = stone->Width;
 
 	boardGrid->Children->Append(stone);
-	//boardGrid->SetZIndex(stone, 2);
 	boardGrid->SetTop(stone, SideMargin * (y + 1) - stone->Width / 2.0);
 	boardGrid->SetLeft(stone, SideMargin * (x + 1) - stone->Width / 2.0);
 	
 	stonesOnCanvas->Append(stone);
+	stonesCoordinates->Append(ref new pair<uint16_t, uint16_t>(x, y));
 
 	*currentMatch->board->GetAt(x, y)->takenBy = *turn;
 }
 
 bool BoardPage::RemoveStone(uint16_t x, uint16_t y)
 {
-	uint32_t stoneIndex;
-	for (auto stone : stonesOnCanvas) {
-		if (stone->Name == "Stone" + x.ToString() + "x" + y.ToString()) {
-			boardGrid->Children->IndexOf(stone, &stoneIndex);
-			boardGrid->Children->RemoveAt(stoneIndex);
-			stonesOnCanvas->IndexOf(stone, &stoneIndex);
-			stonesOnCanvas->RemoveAt(stoneIndex);
-
-			*currentMatch->board->GetAt(x, y)->takenBy = 0;
-			return true;
+	uint32_t stoneIndex = 0;
+	for (auto i = stonesCoordinates->First(); i->HasCurrent; i->MoveNext(), ++stoneIndex) {
+		if (i->Current->first == x && i->Current->second == y) {
+			stonesCoordinates->RemoveAt(stoneIndex);
+			for (auto stone : stonesOnCanvas) {
+				if (stone->Name == "Stone" + x.ToString() + "x" + y.ToString()) {
+					boardGrid->Children->IndexOf(stone, &stoneIndex);
+					boardGrid->Children->RemoveAt(stoneIndex);
+					stonesOnCanvas->IndexOf(stone, &stoneIndex);
+					stonesOnCanvas->RemoveAt(stoneIndex);
+					*currentMatch->board->GetAt(x, y)->takenBy = 0;
+					return true;
+				}
+			}
 		}
 	}
 	return false;
+}
+
+void BoardPage::ClearBoard() {
+
+	boardGrid->Children->Clear();
+	DrawBoardGrid();
+
+	stonesOnCanvas->Clear();
+
+	for (auto i = stonesCoordinates->First(); i->HasCurrent; i->MoveNext())
+		*currentMatch->board->GetAt(i->Current->first, i->Current->second)->takenBy = 0;
+
+	stonesCoordinates->Clear();
 }
 
 /// <summary>

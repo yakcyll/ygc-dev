@@ -31,9 +31,9 @@ namespace ygc {
 	template<typename T1, typename T2>
 	private ref class pair sealed {
 
-	public:
-		property T1 first;
-		property T2 second;
+	internal:
+		T1 first;
+		T2 second;
 		pair() : first(), second() { }
 		pair(T1 t1, T2 t2) : first(t1), second(t2) { }
 	};

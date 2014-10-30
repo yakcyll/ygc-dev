@@ -24,6 +24,7 @@ namespace ygc
 		Canvas ^ LayoutRoot, ^ boardGrid;
 		Border ^ boardGridBorder;
 		Vector<Image^>^ stonesOnCanvas;
+		Vector<pair<uint16_t, uint16_t>^>^ stonesCoordinates;
 		ygcMatch ^ currentMatch;
 
 		void InitUI();
@@ -33,6 +34,7 @@ namespace ygc
 
 		void AddStone(ygcStoneColor^, uint16_t, uint16_t);
 		bool RemoveStone(uint16_t, uint16_t);
+		void ClearBoard();
 
 		void UpdateScrollBoardViewScroll(Object^, SizeChangedEventArgs^);
 

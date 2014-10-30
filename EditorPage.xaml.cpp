@@ -175,7 +175,7 @@ void EditorPage::InitPanels()
 			if (*turn == 1)
 				mixedStonesEnabled = true;
 		}
-		this->UpdateIcons();
+		UpdateIcons();
 	});
 
 	editMode = ref new Image();
@@ -188,11 +188,30 @@ void EditorPage::InitPanels()
 			RewindHistory();
 
 		historyModeEnabled = !historyModeEnabled;
-		this->UpdateIcons();
+		UpdateIcons();
+	});
+
+	clearBoard = ref new Image();
+	clearBoard->Source = ref new BitmapImage(ref new Uri(defaultAppSettings::defaultAdditionalIcons[0]));
+	clearBoard->Width = bp->PanelWidth;
+	clearBoard->Height = bp->PanelWidth;
+
+	clearBoard->Tapped += ref new TappedEventHandler([this](Object^ s, TappedRoutedEventArgs^ e){
+		if (historyModeEnabled)
+			return;
+
+		bp->ClearBoard();
+		for (auto i = 0; i < noPlayers; ++i) {
+			playerScores[i] = 0;
+			scoreTBs[i]->Text = playerScores[i].ToString();
+		}
+		*turn = 1;
+		UpdateIcons();
 	});
 
 	TPMode->Children->Append(stoneBrush);
 	TPMode->Children->Append(editMode);
+	TPMode->Children->Append(clearBoard);
 
 	hRewind = ref new Image();
 	hRewind->Source = ref new BitmapImage(ref new Uri(defaultAppSettings::defaultEditNavIcons[0]));
@@ -202,7 +221,7 @@ void EditorPage::InitPanels()
 	hRewind->Tapped += ref new TappedEventHandler([this](Object^ s, TappedRoutedEventArgs^ te){
 		if (historyModeEnabled && moveId != 0) {
 			RewindHistory();
-			this->UpdateIcons();
+			UpdateIcons();
 		}
 	});
 
@@ -315,6 +334,7 @@ void EditorPage::UpdateIcons()
 
 	if (historyModeEnabled) {
 		stoneBrush->Opacity = 0.5;
+		clearBoard->Opacity = 0.5;
 
 		//silly looking bit, but has to cover 0 == bp->currentMatch->moveHistory->Size
 		if (moveId == bp->currentMatch->moveHistory->Size)
@@ -333,6 +353,7 @@ void EditorPage::UpdateIcons()
 	}
 	else {
 		stoneBrush->Opacity = 1.0;
+		clearBoard->Opacity = 1.0;
 		hRewind->Opacity = 0.5;
 		hNext->Opacity = 0.5;
 		hPrev->Opacity = 0.5;
