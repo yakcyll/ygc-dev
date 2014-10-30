@@ -26,7 +26,7 @@ namespace ygc
 		Array<TextBlock^>^ scoreTBs;
 		Array<uint16_t>^ playerScores;
 		uint16_t moveId, noPlayers;
-		ygcStoneColor ^ turn;
+		ygcStoneColor ^ turn, ^ historyTurn;
 		bool historyModeEnabled;
 		bool mixedStonesEnabled;
 

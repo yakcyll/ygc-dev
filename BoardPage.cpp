@@ -98,9 +98,9 @@ void BoardPage::InitScrollViewer()
 
 void BoardPage::UpdateScrollBoardViewScroll(Object^ s, SizeChangedEventArgs^ e)
 {
-	double ov = ScrollBoardView->HorizontalOffset;
-	double oh = ScrollBoardView->ScrollableHeight - ScrollBoardView->VerticalOffset;
-	ScrollBoardView->ChangeView(ov, oh, ScrollBoardView->ZoomFactor);
+	double ov = ScrollBoardView->VerticalOffset;
+	double oh = ScrollBoardView->ScrollableWidth - ScrollBoardView->HorizontalOffset;
+	//ScrollBoardView->ChangeView(ov, oh, ScrollBoardView->ZoomFactor);
 }
 
 void BoardPage::DrawBoardGrid()

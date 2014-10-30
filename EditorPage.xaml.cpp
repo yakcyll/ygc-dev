@@ -23,7 +23,8 @@ using namespace Windows::UI::Xaml::Navigation;
 
 // The Blank Page item template is documented at http://go.microsoft.com/fwlink/?LinkId=390556
 
-EditorPage::EditorPage() : historyModeEnabled(false), moveId(0), noPlayers(2), mixedStonesEnabled(true), turn(ref new Go19::Go19StoneColor(Go19::Go19StoneColor::BLACK))
+EditorPage::EditorPage() : historyModeEnabled(false), moveId(0), noPlayers(2), mixedStonesEnabled(true), 
+						   turn(ref new Go19::Go19StoneColor(Go19::Go19StoneColor::BLACK)), historyTurn(ref new Go19::Go19StoneColor())
 {
 	InitializeComponent();
 
@@ -184,8 +185,12 @@ void EditorPage::InitPanels()
 	editMode->Height = bp->PanelWidth;
 
 	editMode->Tapped += ref new TappedEventHandler([this](Object^ s, TappedRoutedEventArgs^ e){
-		if (historyModeEnabled)
+		if (historyModeEnabled) {
 			RewindHistory();
+			*turn = *historyTurn;
+		}
+		else
+			*historyTurn = *turn;
 
 		historyModeEnabled = !historyModeEnabled;
 		UpdateIcons();
@@ -221,6 +226,7 @@ void EditorPage::InitPanels()
 	hRewind->Tapped += ref new TappedEventHandler([this](Object^ s, TappedRoutedEventArgs^ te){
 		if (historyModeEnabled && moveId != 0) {
 			RewindHistory();
+			*turn = *historyTurn;
 			UpdateIcons();
 		}
 	});
