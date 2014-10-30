@@ -21,7 +21,7 @@ namespace ygc
 		Border ^ CPCountBorder, ^CPIndBorder, ^ TPModeBorder, ^TPHistoryBorder;
 		Canvas ^ LayoutRoot;
 
-		Image ^ turnIndicator, ^ stoneBrush, ^ editMode, ^ hPrev, ^ hNext;
+		Image ^ turnIndicator, ^ stoneBrush, ^ editMode, ^ hRewind, ^ hPrev, ^ hNext;
 
 		Array<TextBlock^>^ scoreTBs;
 		Array<uint16_t>^ playerScores;

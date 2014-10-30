@@ -140,7 +140,7 @@ void BoardPage::AddStone(ygcStoneColor^ turn, uint16_t x, uint16_t y)
 	stone->Height = stone->Width;
 
 	boardGrid->Children->Append(stone);
-	boardGrid->SetZIndex(stone, 2);
+	//boardGrid->SetZIndex(stone, 2);
 	boardGrid->SetTop(stone, SideMargin * (y + 1) - stone->Width / 2.0);
 	boardGrid->SetLeft(stone, SideMargin * (x + 1) - stone->Width / 2.0);
 	

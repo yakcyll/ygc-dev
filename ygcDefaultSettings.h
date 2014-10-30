@@ -16,7 +16,8 @@ namespace ygc {
 
 		Platform::String^ const defaultEditIcons[3] = { "ms-appx:///Assets/board_assets/ygc-edit-stone-both.png", "ms-appx:///Assets/board_assets/ygc-edit-stone-black.png", "ms-appx:///Assets/board_assets/ygc-edit-stone-white.png" };
 		Platform::String^ const defaultModeIcons[2] = { "ms-appx:///Assets/board_assets/appbar.edit.png", "ms-appx:///Assets/board_assets/appbar.control.play.png" };
-		Platform::String^ const defaultEditNavIcons[2] = { "ms-appx:///Assets/board_assets/appbar.navigate.previous.png", "ms-appx:///Assets/board_assets/appbar.navigate.next.png" };
+		Platform::String^ const defaultAdditionalIcons[1] = { "ms-appx:///Assets/board_assets/appbar.page.png" };
+		Platform::String^ const defaultEditNavIcons[3] = { "ms-appx:///Assets/board_assets/appbar.control.rewind.variant.png", "ms-appx:///Assets/board_assets/appbar.navigate.previous.png", "ms-appx:///Assets/board_assets/appbar.navigate.next.png" };
 
 	};
 

@@ -94,6 +94,12 @@
     <Image Include="Assets\board_assets\appbar.navigate.previous.png">
       <Filter>Assets\board_assets</Filter>
     </Image>
+    <Image Include="Assets\board_assets\appbar.control.rewind.variant.png">
+      <Filter>Assets\board_assets</Filter>
+    </Image>
+    <Image Include="Assets\board_assets\appbar.page.png">
+      <Filter>Assets\board_assets</Filter>
+    </Image>
   </ItemGroup>
   <ItemGroup>
     <Page Include="MatchPage.xaml" />

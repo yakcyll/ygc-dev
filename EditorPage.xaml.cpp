@@ -194,8 +194,20 @@ void EditorPage::InitPanels()
 	TPMode->Children->Append(stoneBrush);
 	TPMode->Children->Append(editMode);
 
+	hRewind = ref new Image();
+	hRewind->Source = ref new BitmapImage(ref new Uri(defaultAppSettings::defaultEditNavIcons[0]));
+	hRewind->Width = bp->PanelWidth;
+	hRewind->Height = bp->PanelWidth;
+
+	hRewind->Tapped += ref new TappedEventHandler([this](Object^ s, TappedRoutedEventArgs^ te){
+		if (historyModeEnabled && moveId != 0) {
+			RewindHistory();
+			this->UpdateIcons();
+		}
+	});
+
 	hPrev = ref new Image();
-	hPrev->Source = ref new BitmapImage(ref new Uri(defaultAppSettings::defaultEditNavIcons[0]));
+	hPrev->Source = ref new BitmapImage(ref new Uri(defaultAppSettings::defaultEditNavIcons[1]));
 	hPrev->Width = bp->PanelWidth;
 	hPrev->Height = bp->PanelWidth;
 
@@ -212,7 +224,7 @@ void EditorPage::InitPanels()
 	});
 	
 	hNext = ref new Image();
-	hNext->Source = ref new BitmapImage(ref new Uri(defaultAppSettings::defaultEditNavIcons[1]));
+	hNext->Source = ref new BitmapImage(ref new Uri(defaultAppSettings::defaultEditNavIcons[2]));
 	hNext->Width = bp->PanelWidth;
 	hNext->Height = bp->PanelWidth;
 
@@ -228,6 +240,7 @@ void EditorPage::InitPanels()
 		UpdateIcons();
 	});
 
+	TPHistory->Children->Append(hRewind);
 	TPHistory->Children->Append(hPrev);
 	TPHistory->Children->Append(hNext);
 }
@@ -261,6 +274,7 @@ void EditorPage::InitInputHandler()
 					UpdateIcons();
 				}
 
+				hRewind->Opacity = 1.0;
 				hPrev->Opacity = 1.0;
 
 				ygcMove ^ move = ref new ygcMove();
@@ -307,14 +321,19 @@ void EditorPage::UpdateIcons()
 			hNext->Opacity = 0.5;
 		else
 			hNext->Opacity = 1.0;
-		if (moveId == 0)
+		if (moveId == 0) {
+			hRewind->Opacity = 0.5;
 			hPrev->Opacity = 0.5;
-		else
+		}
+		else {
+			hRewind->Opacity = 1.0;
 			hPrev->Opacity = 1.0;
+		}
 
 	}
 	else {
 		stoneBrush->Opacity = 1.0;
+		hRewind->Opacity = 0.5;
 		hNext->Opacity = 0.5;
 		hPrev->Opacity = 0.5;
 	}
