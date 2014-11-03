@@ -62,16 +62,11 @@ ygcBoard::ygcBoard(uint16_t sbw, uint16_t sbh) : sBoardWidth(sbw), sBoardHeight(
 		fields->SetAt(index, ref new ygcStoneColor());
 }
 
-ygcBoard::ygcBoard(const ygcBoard^ b)
+ygcBoard::ygcBoard(const ygcBoard^ b) : sBoardWidth(b->sBoardWidth), sBoardHeight(b->sBoardHeight), moveHistory(nullptr)
 {
-	sBoardWidth = b->sBoardWidth;
-	sBoardHeight = b->sBoardHeight;
 	fields = ref new Vector<ygcStoneColor^>(sBoardWidth * sBoardHeight);
-
 	for (uint16_t index = 0; index < fields->Size; ++index)
-		 fields->SetAt(index, b->fields->GetAt(index));
-
-	moveHistory = nullptr;
+		fields->SetAt(index, ref new ygcStoneColor(*b->fields->GetAt(index)));
 }
 
 ygcStoneColor^ ygcBoard::GetAt(Point coord) 

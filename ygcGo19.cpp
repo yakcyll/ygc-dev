@@ -81,10 +81,10 @@ Vector<Point>^ getLiberties(ygcBoard^ b, Point coord)
 	return liberties;
 }
 
-bool inAtari(ygcBoard^ board, Point coord)
+bool inAtari(ygcBoard^ board, Point coord, bool killed = false)
 {
 	ygcBoard^ b = ref new ygcBoard(board);
-	return getLiberties(b, coord)->Size == 1;
+	return getLiberties(b, coord)->Size == (killed ? 0 : 1);
 }
 
 bool Go19::bGo19_IsLegal(ygcMatch^ m, Point coord)
@@ -130,9 +130,10 @@ Vector<Point>^ getChainPoints(ygcBoard^ b, Point coord)
 
 	Vector<Point>^ neighbors = getNeighbors(Point(b->sBoardWidth, b->sBoardHeight), coord);
 
+	uint32_t tmp;
 	for (Point neighbor : neighbors) {
-		if (*b->GetAt(coord) == *myColor) {
-			if (!stones->IndexOf(neighbor, nullptr))
+		if (*b->GetAt(neighbor) == *myColor) {
+			if (!stones->IndexOf(neighbor, &tmp))
 				VectorSetAdd(stones, getChainPoints(b, neighbor));
 		}
 	}
@@ -142,7 +143,7 @@ Vector<Point>^ getChainPoints(ygcBoard^ b, Point coord)
 
 uint16_t Go19::vGo19_SearchForPrisoners(ygcMatch^ m, Point coord)
 {
-	ygcBoard^ b = ref new ygcBoard(m->board);
+	ygcBoard^ b;
 	Vector<Point>^ stones;
 	uint16_t cap_count = 0;
 
@@ -151,11 +152,13 @@ uint16_t Go19::vGo19_SearchForPrisoners(ygcMatch^ m, Point coord)
 
 	for (Point neighbor : getNeighbors(Point(m->board->sBoardWidth, m->board->sBoardHeight), coord)) {
 		if (*m->board->GetAt(neighbor) == *oc) {
-			if (inAtari(m->board, neighbor)) {
+			if (inAtari(m->board, neighbor, true)) {
+				b = ref new ygcBoard(m->board);
 				stones = getChainPoints(b, neighbor);
 
 				for (Point p : stones) {
-					*m->board->GetAt(coord) = 0;
+					// the only way i know that will, given the current state of how class hierarchy is structured, allow for notifying the ui of changes to the board.
+					m->board->fields->SetAt((uint16_t)p.Y * m->board->sBoardWidth + (uint16_t)p.X, ref new Go19::Go19StoneColor(Go19::Go19StoneColor::EMPTY));
 					++cap_count;
 				}
 			}

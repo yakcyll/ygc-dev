@@ -43,7 +43,7 @@ MatchPage::MatchPage()
 
 void MatchPage::InitMatch()
 {
-	bp->currentMatch = ref new Go19::Go19Match(13, 13); // <--
+	bp->currentMatch = ref new Go19::Go19Match(5, 5); // <--
 
 	bp->currentMatch->players->Append(ref new ygcPlayer(bp->currentMatch, ref new Go19::Go19StoneColor(Go19::Go19StoneColor::BLACK), ygcPlayerInputType::SCREEN, "Player1"));
 	bp->currentMatch->players->Append(ref new ygcPlayer(bp->currentMatch, ref new Go19::Go19StoneColor(Go19::Go19StoneColor::WHITE), ygcPlayerInputType::SCREEN, "Player2"));
