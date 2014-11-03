@@ -30,59 +30,29 @@ MatchPage::MatchPage()
 	
 	InitMatch();
 	bp->InitUI();
-	InitHandlers();
 	InitScorePanels();
+	InitHandlers();
+
+	SizeChanged += ref new SizeChangedEventHandler(this, &MatchPage::OrientHandler);
+	bp->currentMatch->board->fields->VectorChanged += ref new VectorChangedEventHandler<ygcStoneColor^>([this](Object^ sender, IVectorChangedEventArgs^ e) {
+		if (e->CollectionChange == CollectionChange::ItemChanged && bp->currentMatch->board->fields->GetAt(e->Index) == 0)
+			bp->RemoveStone(Point((float)(e->Index % bp->currentMatch->board->sBoardWidth), (float)(e->Index / (uint16_t)bp->currentMatch->board->sBoardWidth)));
+
+	});
 }
 
 void MatchPage::InitMatch()
 {
-	bp->currentMatch = ref new Go19::Go19Match();
+	bp->currentMatch = ref new Go19::Go19Match(13, 13); // <--
 
 	bp->currentMatch->players->Append(ref new ygcPlayer(bp->currentMatch, ref new Go19::Go19StoneColor(Go19::Go19StoneColor::BLACK), ygcPlayerInputType::SCREEN, "Player1"));
 	bp->currentMatch->players->Append(ref new ygcPlayer(bp->currentMatch, ref new Go19::Go19StoneColor(Go19::Go19StoneColor::WHITE), ygcPlayerInputType::SCREEN, "Player2"));
 
-	for (auto i = 0; i < bp->currentMatch->board->sBoardWidth; ++i) {
-		for (auto j = 0; j < bp->currentMatch->board->sBoardHeight; ++j) {
-
-			ygcField^ field = ref new ygcField();
-			field->takenBy = ref new Go19::Go19StoneColor(Go19::Go19StoneColor::EMPTY);
-			field->x = i;
-			field->y = j;
-
-			bp->currentMatch->board->GetAt(i, j) = field;
-		}
-	}
+	for (uint16_t i = 0; i < bp->currentMatch->board->sBoardWidth; ++i)
+		for (uint16_t j = 0; j < bp->currentMatch->board->sBoardHeight; ++j)
+			bp->currentMatch->board->SetAt(Point(i, j), Go19::Go19StoneColor(Go19::Go19StoneColor::EMPTY));
 
 }
-
-void MatchPage::InitHandlers()
-{
-	for (unsigned int k = 0; k < bp->currentMatch->players->Size; ++k) {
-		if (bp->currentMatch->players->GetAt(k)->inputHandler->ypiType == ygcPlayerInputType::SCREEN) {
-			ygcPlayer^ pp = bp->currentMatch->players->GetAt(k);
-			bp->boardGrid->Tapped += ref new TappedEventHandler([this, pp](Object^ s, RoutedEventArgs^ e){
-
-				if (pp->inputHandler->handleInput(s, e)) {
-
-					Canvas^ c = (Canvas^)s;
-					TappedRoutedEventArgs^ te = (TappedRoutedEventArgs^)e;
-
-					Shapes::Ellipse^ stone = ref new Shapes::Ellipse();
-					stone->Fill = ref new SolidColorBrush(defaultAppSettings::defaultStoneColors[bp->currentMatch->turn->previous()]);
-					stone->Width = 0.9 * bp->SideMargin;
-					stone->Height = stone->Width;
-					stone->Stroke = ref new SolidColorBrush(Windows::UI::Colors::Black);
-					stone->StrokeThickness = 2.0f;
-
-					bp->boardGrid->Children->Append(stone);
-					bp->boardGrid->SetTop(stone, ::floor((te->GetPosition(c).Y - bp->SideMargin / 2.0f) / bp->SideMargin) * bp->SideMargin + bp->SideMargin / 2.0f);
-					bp->boardGrid->SetLeft(stone, ::floor((te->GetPosition(c).X - bp->SideMargin / 2.0f) / bp->SideMargin) * bp->SideMargin + bp->SideMargin / 2.0f);
-				}
-			});
-		}
-	}
-}
-
 
 void MatchPage::InitScorePanels()
 {
@@ -94,11 +64,14 @@ void MatchPage::InitScorePanels()
 	OppPanelBorder = ref new Border();
 	PlayerPanelBorder = ref new Border();
 
-	bp->LayoutRoot->Children->Append(OppPanel);
-	bp->LayoutRoot->Children->Append(PlayerPanel);
+	LayoutRoot->Children->Append(OppPanel);
+	LayoutRoot->Children->Append(PlayerPanel);
 
-	bp->LayoutRoot->SetZIndex(OppPanel, 2);
-	bp->LayoutRoot->SetZIndex(PlayerPanel, 2);
+	LayoutRoot->SetZIndex(OppPanel, 2);
+	LayoutRoot->SetZIndex(PlayerPanel, 2);
+
+	LayoutRoot->SetTop(OppPanel, 0.0);
+	LayoutRoot->SetLeft(OppPanel, 0.0);
 
 	OppPanel->FlowDirection = Windows::UI::Xaml::FlowDirection::RightToLeft;
 	PlayerPanel->FlowDirection = Windows::UI::Xaml::FlowDirection::RightToLeft;
@@ -133,7 +106,7 @@ void MatchPage::InitScorePanels()
 	TextBlock^ s1 = ref new TextBlock();
 	s1->Name = "Player1Score";
 	s1->Foreground = ref new SolidColorBrush(Windows::UI::Colors::White);
-	s1->Text = "4";
+	s1->Text = "0";
 	s1->FontFamily = ref new Windows::UI::Xaml::Media::FontFamily("Arial");
 	s1->FontSize = 20.0;
 	s1->FontWeight = Windows::UI::Text::FontWeights::Bold;
@@ -155,7 +128,7 @@ void MatchPage::InitScorePanels()
 	TextBlock^ s2 = ref new TextBlock();
 	s2->Name = "Player2Score";
 	s2->Foreground = ref new SolidColorBrush(Windows::UI::Colors::White);
-	s2->Text = "4";
+	s2->Text = "0";
 	s2->FontFamily = ref new Windows::UI::Xaml::Media::FontFamily("Arial");
 	s2->FontSize = 20.0;
 	s2->FontWeight = Windows::UI::Text::FontWeights::Bold;
@@ -192,6 +165,36 @@ void MatchPage::InitScorePanels()
 		OppPanelCont->Children->Append(b1);
 		OppPanelCont->Children->Append(e1);
 		OppPanelCont->Children->Append(s1);
+	}
+}
+
+void MatchPage::InitHandlers()
+{
+	for (unsigned int k = 0; k < bp->currentMatch->players->Size; ++k) {
+		if (bp->currentMatch->players->GetAt(k)->inputHandler->ypiType == ygcPlayerInputType::SCREEN) {
+			ygcPlayer^ pp = bp->currentMatch->players->GetAt(k);
+			bp->boardGrid->Tapped += ref new TappedEventHandler([this, pp](Object^ s, TappedRoutedEventArgs^ te){
+				
+				Canvas^ c = (Canvas^)s;
+				Point tapPoint = te->GetPosition(c);
+
+				ygcBoard^ board = pp->activeMatch->board;
+				float SideMargin = float(c->Width > c->Height ? c->Width / float(board->sBoardWidth + 1) : c->Height / float(board->sBoardHeight + 1));
+
+				if (tapPoint.X < SideMargin / 2.0f || tapPoint.X > c->Width - SideMargin / 2.0f ||
+					tapPoint.Y < SideMargin / 2.0f || tapPoint.Y > c->Height - SideMargin / 2.0f)
+					return;
+
+				uint16_t x = uint16_t(::round(tapPoint.X / SideMargin) - 1.0);
+				uint16_t y = uint16_t(::round(tapPoint.Y / SideMargin) - 1.0);
+
+				if (pp->inputHandler->handleInput(Point(x, y))) {
+					Point coord = Point(::roundf(te->GetPosition(c).X / (float)bp->SideMargin) - 1.0f, ::roundf(te->GetPosition(c).Y / (float)bp->SideMargin) - 1.0f);
+					ygcStoneColor^ pturn = ref new ygcStoneColor(pp->activeMatch->turn->previous());
+					bp->AddStone(coord, *pturn);
+				}
+			});
+		}
 	}
 }
 

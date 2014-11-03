@@ -45,19 +45,11 @@ EditorPage::EditorPage() : historyModeEnabled(false), moveId(0), noPlayers(2), m
 
 void EditorPage::InitBoard()
 {
-	bp->currentMatch = ref new Go19::Go19Match(13, 13);
+	bp->currentMatch = ref new Go19::Go19Match(13, 13); // <--
 
-	for (auto i = 0; i < bp->currentMatch->board->sBoardWidth; ++i) {
-		for (auto j = 0; j < bp->currentMatch->board->sBoardHeight; ++j) {
-
-			ygcField^ field = ref new ygcField();
-			field->takenBy = ref new Go19::Go19StoneColor(Go19::Go19StoneColor::EMPTY);
-			field->x = i;
-			field->y = j;
-
-			bp->currentMatch->board->GetAt(i, j) = field;
-		}
-	}
+	for (uint16_t i = 0; i < bp->currentMatch->board->sBoardWidth; ++i)
+		for (uint16_t j = 0; j < bp->currentMatch->board->sBoardHeight; ++j)
+			bp->currentMatch->board->SetAt(Point(i, j), Go19::Go19StoneColor(Go19::Go19StoneColor::EMPTY));
 
 	bp->InitUI();
 }
@@ -287,10 +279,11 @@ void EditorPage::InitInputHandler()
 
 		uint16_t x = uint16_t(::round(tapPoint.X / SideMargin) - 1.0);
 		uint16_t y = uint16_t(::round(tapPoint.Y / SideMargin) - 1.0);
+		Point coord = Point(x, y);
 
-		if (*board->GetAt(x,y)->takenBy == 0) {
+		if (*board->GetAt(coord) == 0) {
 
-			bp->AddStone(turn, x, y);
+			bp->AddStone(coord, *turn);
 
 			if (historyModeEnabled) {
 				if (bp->currentMatch->moveHistory->Size != moveId) {
@@ -323,9 +316,9 @@ void EditorPage::InitInputHandler()
 			if (historyModeEnabled)
 				return;
 
-			uint16_t playerIndex = (int)*bp->currentMatch->board->GetAt(x, y)->takenBy - 1;
+			uint16_t playerIndex = (int)*bp->currentMatch->board->GetAt(coord) - 1;
 
-			bp->RemoveStone(x, y);
+			bp->RemoveStone(coord);
 
 			--playerScores[playerIndex];
 			scoreTBs[playerIndex]->Text = playerScores[playerIndex].ToString();
@@ -381,12 +374,12 @@ void EditorPage::UpdateBoard(ygcMove^ lastMove, bool forward)
 
 		if ((i->Current->status == ygcStoneStatus::ADDED && !forward) || (i->Current->status == ygcStoneStatus::FALLEN && forward)) {
 			//remove
-			bp->RemoveStone(i->Current->x, i->Current->y);
+			bp->RemoveStone(Point(i->Current->x, i->Current->y));
 			--playerScores[playerIndex];
 		}
 		else if ((i->Current->status == ygcStoneStatus::ADDED && forward) || (i->Current->status == ygcStoneStatus::FALLEN && !forward)) {
 			// add
-			bp->AddStone(i->Current->whose, i->Current->x, i->Current->y);
+			bp->AddStone(Point(i->Current->x, i->Current->y), *i->Current->whose);
 			++playerScores[playerIndex];
 		}
 		scoreTBs[playerIndex]->Text = playerScores[playerIndex].ToString();

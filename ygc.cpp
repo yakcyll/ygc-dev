@@ -6,7 +6,7 @@
 #include "pch.h"
 
 using namespace ygc;
-
+using namespace Windows::Foundation;
 
 /* ygcMatch method implementation */
 
@@ -21,7 +21,6 @@ ygcMatch::ygcMatch() : board(nullptr), turn(nullptr)
 	moveHistory = ref new Vector<ygcMove^>();
 }
 
-
 bool ygcMatch::matchMoveBack(unsigned int count)
 {
 	return true;
@@ -32,19 +31,20 @@ bool ygcMatch::matchMoveForward(unsigned int count)
 	return true;
 }
 
-bool ygcMatch::matchMakeMove(uint16_t x, uint16_t y)
+bool ygcMatch::matchMakeMove(Point coord)
 {
 	for (auto f : matchRules->validMoves)
-		if (!f(board, x, y))
+		if (!f(this, coord))
 			return false;
 
-	moveHistory->Append(ref new ygcMove());
-	moveHistory->GetAt(moveHistory->Size - 1)->stonesChanged.Append(ref new ygcStoneChange(this->turn, ygcStoneStatus::ADDED, x, y));
+	ygcMove^ move = ref new ygcMove();
+	move->stonesChanged.Append(ref new ygcStoneChange(this->turn, ygcStoneStatus::ADDED, (uint16_t)coord.X, (uint16_t)coord.Y));
+	moveHistory->Append(move);
 
-	*board->GetAt(x,y)->takenBy = *turn;
+	*board->GetAt(coord) = *turn;
 
 	for (auto f : matchRules->postMoves)
-		f(this, x, y);
+		players->GetAt((int)*turn - 1)->score += f(this, coord);
 
 	turn->increment();
 
@@ -57,18 +57,32 @@ bool ygcMatch::matchMakeMove(uint16_t x, uint16_t y)
 
 ygcBoard::ygcBoard(uint16_t sbw, uint16_t sbh) : sBoardWidth(sbw), sBoardHeight(sbh), moveHistory(nullptr)
 {
-	fields = ref new Array<Object^>(sBoardWidth);
-	for (auto i = 0; i < sBoardWidth; ++i) {
-		fields[i] = ref new Array<ygcField^>(sBoardHeight);
-		for (auto j = 0; j < sBoardHeight; ++j) {
-			((Array<ygcField^>^)fields[i])[j] = ref new ygcField();
-		}
-	}
+	fields = ref new Vector<ygcStoneColor^>(sBoardWidth * sBoardHeight);
+	for (uint16_t index = 0; index < fields->Size; ++index)
+		fields->SetAt(index, ref new ygcStoneColor());
 }
 
-ygcField^& ygcBoard::GetAt(uint16_t x, uint16_t y) 
+ygcBoard::ygcBoard(const ygcBoard^ b)
 {
-	return ((Array<ygcField^>^)fields[x])[y];
+	sBoardWidth = b->sBoardWidth;
+	sBoardHeight = b->sBoardHeight;
+	fields = ref new Vector<ygcStoneColor^>(sBoardWidth * sBoardHeight);
+
+	for (uint16_t index = 0; index < fields->Size; ++index)
+		 fields->SetAt(index, b->fields->GetAt(index));
+
+	moveHistory = nullptr;
+}
+
+ygcStoneColor^ ygcBoard::GetAt(Point coord) 
+{
+	ygcStoneColor^ rp = fields->GetAt((uint16_t)coord.Y * sBoardWidth + (uint16_t)coord.X);
+	return rp;
+}
+
+void ygcBoard::SetAt(Point coord, ygcStoneColor sc)
+{
+	*fields->GetAt((uint16_t)coord.Y * sBoardWidth + (uint16_t)coord.X) = sc;
 }
 
 /* ygcPlayer method implementation */
@@ -102,6 +116,7 @@ void ygcPlayer::initPlayer(ygcMatch^ currentMatch, ygcPlayerInputType ypiType)
 	ready = false;
 	passed = false;
 	activeMatch = currentMatch;
+	score = 0.0;
 
 	switch (ypiType) {
 	case SCREEN:
@@ -112,5 +127,6 @@ void ygcPlayer::initPlayer(ygcMatch^ currentMatch, ygcPlayerInputType ypiType)
 		break;
 	}
 
+	inputHandler->ypiType = ypiType;
 	inputHandler->player = this;
 }

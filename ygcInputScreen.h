@@ -20,7 +20,7 @@ namespace ygc {
 		internal:
 			ScreenInput();
 
-			bool handleInput(Object^, RoutedEventArgs^) override;
+			bool handleInput(Point) override;
 		};
 
 	};

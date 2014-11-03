@@ -7,6 +7,7 @@
 
 using namespace Platform;
 using namespace Platform::Collections;
+using namespace Windows::Foundation;
 using namespace Windows::UI::Xaml;
 using namespace Windows::UI::Xaml::Controls;
 using namespace Windows::System::Threading;
@@ -21,8 +22,8 @@ namespace ygc {
 	ref class ygcPlayer;
 	ref class ygcMatch;
 
-	typedef bool(*moveValidator)(ygcBoard^, uint16_t, uint16_t);
-	typedef void(*postMoveAction)(ygcMatch^, uint16_t, uint16_t);
+	typedef bool(*moveValidator)(ygcMatch^, Point);
+	typedef uint16_t(*postMoveAction)(ygcMatch^, Point);
 
 	enum ygcPlayerInputType { DUMMY, SCREEN, WIFI, BT, IGS, AI, SPEC };
 	enum ygcStoneStatus { ADDED, FALLEN };
@@ -74,24 +75,18 @@ namespace ygc {
 		Vector<ygcStoneChange^> stonesChanged;
 	};
 
-	private ref class ygcField sealed {
-	internal:
-		ygcStoneColor^ takenBy;
-		uint16_t x;
-		uint16_t y;
-
-	};
-
 	private ref class ygcBoard sealed {
 	internal:
 		uint16_t sBoardWidth;
 		uint16_t sBoardHeight;
 
-		Array<Object^>^ fields;
+		Vector<ygcStoneColor^>^ fields;
 		Vector<ygcMove^>^ moveHistory;
 
 		ygcBoard(uint16_t, uint16_t);
-		ygcField^& GetAt(uint16_t, uint16_t);
+		ygcBoard(const ygcBoard^);
+		ygcStoneColor^ GetAt(Point);
+		void SetAt(Point, ygcStoneColor);
 	};
 
 	private ref class ygcPlayerInput abstract {
@@ -99,7 +94,7 @@ namespace ygc {
 		ygcPlayerInputType ypiType;
 		ygcPlayer^ player;
 
-		virtual bool handleInput(Object^, RoutedEventArgs^) = 0;
+		virtual bool handleInput(Point) = 0;
 	};
 
 	private ref class ygcPlayer sealed {
@@ -107,6 +102,7 @@ namespace ygc {
 		String^ name;
 		ygcStoneColor^ color;
 		uint32_t stonesTaken;
+		double score;
 
 		bool ready;
 		bool passed;
@@ -133,7 +129,7 @@ namespace ygc {
 
 	internal:
 		ygcBoard^ board;
-		Vector<ygcPlayer^>^ players;	// allowing for a custom number of players would cause an 
+		Vector<ygcPlayer^>^ players;	// allowing for a custom number of players will cause an 
 										// unpleasant increase in sophistication of game logic; 
 										// suffer at your own discretion
 
@@ -142,13 +138,13 @@ namespace ygc {
 		ygcMatchState matchState;
 		uint16_t moveid;
 		Vector<ygcMove^>^ moveHistory;
-		ygcStoneColor^ turn;			// this might be superficial; TODO: think about it when your eyelids won't be so damn heavy
+		ygcStoneColor^ turn;			// this might be superficial; still too useful
 
 		ygcMatch();
 		
 		bool matchMoveBack(unsigned int);
 		bool matchMoveForward(unsigned int);
-		bool matchMakeMove(uint16_t, uint16_t);
+		bool matchMakeMove(Point);
 
 	};
 

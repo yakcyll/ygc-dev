@@ -10,10 +10,6 @@
 
 namespace ygc
 {
-	/// <summary>
-	/// An empty page that can be used on its own or navigated to within a Frame.
-	/// </summary>
-	[Windows::Foundation::Metadata::WebHostHidden]
 	public ref class MatchPage sealed 
 	{
 	internal:
@@ -27,8 +23,8 @@ namespace ygc
 		MatchPage();
 
 		void InitMatch();
-		void InitHandlers();
 		void InitScorePanels();
+		void InitHandlers();
 
 	protected:
 		virtual void OnNavigatedTo(Windows::UI::Xaml::Navigation::NavigationEventArgs^ e) override;
