@@ -8,15 +8,18 @@
 
 using namespace ygc;
 
+using namespace concurrency;
 using namespace Platform;
 using namespace Windows::Foundation;
 using namespace Windows::Foundation::Collections;
+using namespace Windows::UI::Popups;
 using namespace Windows::UI::Xaml;
 using namespace Windows::UI::Xaml::Controls;
 using namespace Windows::UI::Xaml::Controls::Primitives;
 using namespace Windows::UI::Xaml::Data;
 using namespace Windows::UI::Xaml::Input;
 using namespace Windows::UI::Xaml::Media;
+using namespace Windows::UI::Xaml::Media::Imaging;
 using namespace Windows::UI::Xaml::Navigation;
 
 // The Blank Page item template is documented at http://go.microsoft.com/fwlink/?LinkId=390556
@@ -30,6 +33,9 @@ MatchPage::MatchPage()
 	
 	InitMatch();
 	bp->InitUI();
+
+	scoreTBs = ref new Array<TextBlock^>(bp->currentMatch->players->Size);
+
 	InitScorePanels();
 	InitHandlers();
 
@@ -57,42 +63,61 @@ void MatchPage::InitMatch()
 void MatchPage::InitScorePanels()
 {
 	//init score panels
+	TopPanel = ref new StackPanel();
+	BottomPanel = ref new StackPanel();
 	OppPanel = ref new StackPanel();
 	PlayerPanel = ref new StackPanel();
-	OppPanelCont = ref new StackPanel();
-	PlayerPanelCont = ref new StackPanel();
+	PassPanel = ref new StackPanel();
+	OppPanelCont = ref new Grid();
+	PlayerPanelCont = ref new Grid();
+	TurnIndCont = ref new Grid();
+	PassCont = ref new Grid();
 	OppPanelBorder = ref new Border();
 	PlayerPanelBorder = ref new Border();
 
-	LayoutRoot->Children->Append(OppPanel);
-	LayoutRoot->Children->Append(PlayerPanel);
+	LayoutRoot->Children->Append(TopPanel);
+	LayoutRoot->Children->Append(BottomPanel);
 
-	LayoutRoot->SetZIndex(OppPanel, 2);
-	LayoutRoot->SetZIndex(PlayerPanel, 2);
+	LayoutRoot->SetZIndex(TopPanel, 2);
+	LayoutRoot->SetZIndex(BottomPanel, 2);
 
-	LayoutRoot->SetTop(OppPanel, 0.0);
-	LayoutRoot->SetLeft(OppPanel, 0.0);
+	LayoutRoot->SetTop(TopPanel, 0.0);
+	LayoutRoot->SetLeft(TopPanel, 0.0);
 
-	OppPanel->FlowDirection = Windows::UI::Xaml::FlowDirection::RightToLeft;
-	PlayerPanel->FlowDirection = Windows::UI::Xaml::FlowDirection::RightToLeft;
+	TopPanel->FlowDirection = Windows::UI::Xaml::FlowDirection::RightToLeft;
+	BottomPanel->FlowDirection = Windows::UI::Xaml::FlowDirection::RightToLeft;
 
 	SolidColorBrush ^ scb = ref new SolidColorBrush(Windows::UI::Colors::Black);
 	scb->Opacity = 0.5;
-	OppPanel->Background = scb;
-	PlayerPanel->Background = scb;
+	TopPanel->Background = scb;
+	BottomPanel->Background = scb;
 
-	OppPanel->Children->Append(OppPanelBorder);
-	PlayerPanel->Children->Append(PlayerPanelBorder);
+	TopPanel->Children->Append(OppPanelCont);
+	TopPanel->Children->Append(TurnIndCont);
+	BottomPanel->Children->Append(PassCont);
+	BottomPanel->Children->Append(PlayerPanelCont);
+
+	OppPanelCont->Children->Append(OppPanelBorder);
+	OppPanelCont->RowDefinitions->Append(ref new RowDefinition());
+	OppPanelCont->SetRow(OppPanelBorder, 0);
+	OppPanelCont->RowDefinitions->GetAt(0)->Height = GridLength(1, GridUnitType::Star);
+	PlayerPanelCont->Children->Append(PlayerPanelBorder);
+	PlayerPanelCont->RowDefinitions->Append(ref new RowDefinition());
+	PlayerPanelCont->SetRow(PlayerPanelBorder, 0);
+	PlayerPanelCont->RowDefinitions->GetAt(0)->Height = GridLength(1, GridUnitType::Star);
 
 	OppPanelBorder->Padding = 10.0;
 	PlayerPanelBorder->Padding = 10.0;
 
-	PlayerPanelBorder->RenderTransform = ref new RotateTransform();
-	((RotateTransform^)PlayerPanelBorder->RenderTransform)->Angle = 180.0;
-	PlayerPanelBorder->RenderTransformOrigin = Point(0.5, 0.5);
+	BottomPanel->RenderTransform = ref new RotateTransform();
+	((RotateTransform^)BottomPanel->RenderTransform)->Angle = 180.0;
+	BottomPanel->RenderTransformOrigin = Point(0.5, 0.5);
 
-	OppPanelBorder->Child = OppPanelCont;
-	PlayerPanelBorder->Child = PlayerPanelCont;
+	OppPanelBorder->Child = OppPanel;
+	PlayerPanelBorder->Child = PlayerPanel;
+
+	PassCont->Width = bp->PanelWidth;
+	PassCont->Height = bp->PanelWidth;
 
 	//init score panels' content
 	Shapes::Ellipse^ e1 = ref new Shapes::Ellipse();
@@ -103,7 +128,8 @@ void MatchPage::InitScorePanels()
 	e1->StrokeThickness = 2.0f;
 	e1->VerticalAlignment = Windows::UI::Xaml::VerticalAlignment::Center;
 
-	TextBlock^ s1 = ref new TextBlock();
+	scoreTBs[0] = ref new TextBlock();
+	TextBlock^ s1 = scoreTBs[0];
 	s1->Name = "Player1Score";
 	s1->Foreground = ref new SolidColorBrush(Windows::UI::Colors::White);
 	s1->Text = "0";
@@ -114,8 +140,35 @@ void MatchPage::InitScorePanels()
 	s1->HorizontalAlignment = Windows::UI::Xaml::HorizontalAlignment::Center;
 	s1->Margin = Thickness(10);
 
-	PlayerPanelCont->Children->Append(s1);
 	PlayerPanelCont->Children->Append(e1);
+	PlayerPanelCont->Children->Append(s1);
+
+	Image^ PassButton = ref new Image();
+	PassButton->Source = ref new BitmapImage(ref new Uri(defaultAppSettings::defaultAdditionalIcons[1]));
+	PassButton->Width = bp->PanelWidth;
+	PassButton->Height = bp->PanelWidth;
+
+	PassButton->Tapped += ref new TappedEventHandler([this](Object^ ss, TappedRoutedEventArgs ^te) {
+
+		MessageDialog ^ msg = ref new MessageDialog("", "Are you sure you want to pass?");
+		UICommand ^ passCommand = ref new UICommand("Pass");
+		UICommand ^ cancelCommand = ref new UICommand("Cancel");
+		msg->Commands->Append(passCommand);
+		msg->Commands->Append(cancelCommand);
+		msg->DefaultCommandIndex = 0;
+		msg->CancelCommandIndex = 1;
+
+		msg->ShowAsync()->Completed = ref new AsyncOperationCompletedHandler<IUICommand^>([this](IAsyncOperation<IUICommand^>^ res, AsyncStatus)
+		{
+			if (res->GetResults()->Label == "Pass") {
+				bp->currentMatch->matchSkipTurn();
+				UpdateIcons();
+				//and check for match end
+			}
+		});
+	});
+
+	PassCont->Children->Append(PassButton);
 
 	Shapes::Ellipse^ e2 = ref new Shapes::Ellipse();
 	e2->Width = 30.0;
@@ -125,7 +178,8 @@ void MatchPage::InitScorePanels()
 	e2->StrokeThickness = 2.0f;
 	e2->VerticalAlignment = Windows::UI::Xaml::VerticalAlignment::Center;
 
-	TextBlock^ s2 = ref new TextBlock();
+	scoreTBs[1] = ref new TextBlock();
+	TextBlock^ s2 = scoreTBs[1];
 	s2->Name = "Player2Score";
 	s2->Foreground = ref new SolidColorBrush(Windows::UI::Colors::White);
 	s2->Text = "0";
@@ -192,10 +246,16 @@ void MatchPage::InitHandlers()
 					Point coord = Point(::roundf(te->GetPosition(c).X / (float)bp->SideMargin) - 1.0f, ::roundf(te->GetPosition(c).Y / (float)bp->SideMargin) - 1.0f);
 					ygcStoneColor^ pturn = ref new ygcStoneColor(pp->activeMatch->turn->previous());
 					bp->AddStone(coord, *pturn);
+					scoreTBs[(int)*pturn - 1]->Text = ((uint16_t)bp->currentMatch->players->GetAt((int)*pturn - 1)->score).ToString();
 				}
 			});
 		}
 	}
+}
+
+void MatchPage::UpdateIcons() 
+{
+
 }
 
 /// <summary>
@@ -216,32 +276,32 @@ void MatchPage::OrientHandler(Object ^ s, SizeChangedEventArgs ^ sce)
 
 	if (Windows::UI::ViewManagement::ApplicationView::GetForCurrentView()->Orientation == Windows::UI::ViewManagement::ApplicationViewOrientation::Portrait) {
 
+		TopPanel->Orientation = Orientation::Horizontal;
+		BottomPanel->Orientation = Orientation::Horizontal;
 		OppPanel->Orientation = Orientation::Horizontal;
 		PlayerPanel->Orientation = Orientation::Horizontal;
-		OppPanelCont->Orientation = Orientation::Horizontal;
-		PlayerPanelCont->Orientation = Orientation::Horizontal;
 
-		OppPanel->Height = bp->PanelWidth;
-		OppPanel->Width = bp->AppSpaceWidth;
-		PlayerPanel->Height = bp->PanelWidth;
-		PlayerPanel->Width = bp->AppSpaceWidth;
+		TopPanel->Height = bp->PanelWidth;
+		TopPanel->Width = bp->AppSpaceWidth;
+		BottomPanel->Height = bp->PanelWidth;
+		BottomPanel->Width = bp->AppSpaceWidth;
 
-		LayoutRoot->SetTop(PlayerPanel, bp->AppSpaceHeight - PlayerPanel->Height);
-		LayoutRoot->SetLeft(PlayerPanel, 0.0);
+		LayoutRoot->SetTop(BottomPanel, bp->AppSpaceHeight - BottomPanel->Height);
+		LayoutRoot->SetLeft(BottomPanel, 0.0);
 	}
 	else {
 
+		TopPanel->Orientation = Orientation::Vertical;
+		BottomPanel->Orientation = Orientation::Vertical;
 		OppPanel->Orientation = Orientation::Vertical;
 		PlayerPanel->Orientation = Orientation::Vertical;
-		OppPanelCont->Orientation = Orientation::Vertical;
-		PlayerPanelCont->Orientation = Orientation::Vertical;
 
-		OppPanel->Height = bp->AppSpaceHeight;
-		OppPanel->Width = bp->PanelWidth;
-		PlayerPanel->Height = bp->AppSpaceHeight;
-		PlayerPanel->Width = bp->PanelWidth;
+		TopPanel->Height = bp->AppSpaceHeight;
+		TopPanel->Width = bp->PanelWidth;
+		BottomPanel->Height = bp->AppSpaceHeight;
+		BottomPanel->Width = bp->PanelWidth;
 
-		LayoutRoot->SetTop(PlayerPanel, 0.0);
-		LayoutRoot->SetLeft(PlayerPanel, bp->AppSpaceWidth - PlayerPanel->Width);
+		LayoutRoot->SetTop(BottomPanel, 0.0);
+		LayoutRoot->SetLeft(BottomPanel, bp->AppSpaceWidth - BottomPanel->Width);
 	}
 }
