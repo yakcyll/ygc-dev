@@ -134,6 +134,8 @@
     <Image Include="Assets\board_assets\appbar.control.play.png" />
     <Image Include="Assets\board_assets\appbar.control.rewind.variant.png" />
     <Image Include="Assets\board_assets\appbar.edit.png" />
+    <Image Include="Assets\board_assets\appbar.flag.wavy.png" />
+    <Image Include="Assets\board_assets\appbar.hourglass.png" />
     <Image Include="Assets\board_assets\appbar.navigate.next.png" />
     <Image Include="Assets\board_assets\appbar.navigate.previous.png" />
     <Image Include="Assets\board_assets\appbar.page.png" />

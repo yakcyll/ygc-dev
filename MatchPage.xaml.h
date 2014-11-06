@@ -30,6 +30,8 @@ namespace ygc
 		void InitScorePanels();
 		void InitHandlers();
 
+		void EndMatch();
+
 		void UpdateIcons();
 
 	public:

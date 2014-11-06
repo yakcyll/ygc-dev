@@ -138,8 +138,6 @@ void BoardPage::AddStone(Point coord, ygcStoneColor turn)
 	
 	stonesOnCanvas->Append(stone);
 	stonesCoordinates->Append(coord);
-
-	currentMatch->board->SetAt(coord, turn);
 }
 
 bool BoardPage::RemoveStone(Point coord)
@@ -154,7 +152,6 @@ bool BoardPage::RemoveStone(Point coord)
 					boardGrid->Children->RemoveAt(stoneIndex);
 					stonesOnCanvas->IndexOf(stone, &stoneIndex);
 					stonesOnCanvas->RemoveAt(stoneIndex);
-					*currentMatch->board->GetAt(coord) = 0;
 					return true;
 				}
 			}

@@ -32,7 +32,6 @@ MatchPage::MatchPage()
 	LayoutRoot = (Canvas ^)this->Content;
 	
 	InitMatch();
-	bp->InitUI();
 
 	scoreTBs = ref new Array<TextBlock^>(bp->currentMatch->players->Size);
 
@@ -43,13 +42,12 @@ MatchPage::MatchPage()
 	bp->currentMatch->board->fields->VectorChanged += ref new VectorChangedEventHandler<ygcStoneColor^>([this](Object^ sender, IVectorChangedEventArgs^ e) {
 		if (e->CollectionChange == CollectionChange::ItemChanged && bp->currentMatch->board->fields->GetAt(e->Index) == 0)
 			bp->RemoveStone(Point((float)(e->Index % bp->currentMatch->board->sBoardWidth), (float)(e->Index / (uint16_t)bp->currentMatch->board->sBoardWidth)));
-
 	});
 }
 
 void MatchPage::InitMatch()
 {
-	bp->currentMatch = ref new Go19::Go19Match(5, 5); // <--
+	bp->currentMatch = ref new Go19::Go19Match(9, 9); // <--
 
 	bp->currentMatch->players->Append(ref new ygcPlayer(bp->currentMatch, ref new Go19::Go19StoneColor(Go19::Go19StoneColor::BLACK), ygcPlayerInputType::SCREEN, "Player1"));
 	bp->currentMatch->players->Append(ref new ygcPlayer(bp->currentMatch, ref new Go19::Go19StoneColor(Go19::Go19StoneColor::WHITE), ygcPlayerInputType::SCREEN, "Player2"));
@@ -57,6 +55,8 @@ void MatchPage::InitMatch()
 	for (uint16_t i = 0; i < bp->currentMatch->board->sBoardWidth; ++i)
 		for (uint16_t j = 0; j < bp->currentMatch->board->sBoardHeight; ++j)
 			bp->currentMatch->board->SetAt(Point(i, j), Go19::Go19StoneColor(Go19::Go19StoneColor::EMPTY));
+
+	bp->InitUI();
 
 }
 
@@ -92,8 +92,8 @@ void MatchPage::InitScorePanels()
 	TopPanel->Background = scb;
 	BottomPanel->Background = scb;
 
-	TopPanel->Children->Append(OppPanelCont);
 	TopPanel->Children->Append(TurnIndCont);
+	TopPanel->Children->Append(OppPanelCont);
 	BottomPanel->Children->Append(PassCont);
 	BottomPanel->Children->Append(PlayerPanelCont);
 
@@ -106,18 +106,16 @@ void MatchPage::InitScorePanels()
 	PlayerPanelCont->SetRow(PlayerPanelBorder, 0);
 	PlayerPanelCont->RowDefinitions->GetAt(0)->Height = GridLength(1, GridUnitType::Star);
 
+	PassCont->Children->Append(PassPanel);
+	PassCont->RowDefinitions->Append(ref new RowDefinition());
+	PassCont->RowDefinitions->GetAt(0)->Height = GridLength(1, GridUnitType::Star);
+	PassCont->SetRow(PassPanel, 0);
+
 	OppPanelBorder->Padding = 10.0;
 	PlayerPanelBorder->Padding = 10.0;
 
-	BottomPanel->RenderTransform = ref new RotateTransform();
-	((RotateTransform^)BottomPanel->RenderTransform)->Angle = 180.0;
-	BottomPanel->RenderTransformOrigin = Point(0.5, 0.5);
-
 	OppPanelBorder->Child = OppPanel;
 	PlayerPanelBorder->Child = PlayerPanel;
-
-	PassCont->Width = bp->PanelWidth;
-	PassCont->Height = bp->PanelWidth;
 
 	//init score panels' content
 	Shapes::Ellipse^ e1 = ref new Shapes::Ellipse();
@@ -140,11 +138,11 @@ void MatchPage::InitScorePanels()
 	s1->HorizontalAlignment = Windows::UI::Xaml::HorizontalAlignment::Center;
 	s1->Margin = Thickness(10);
 
-	PlayerPanelCont->Children->Append(e1);
-	PlayerPanelCont->Children->Append(s1);
+	PlayerPanel->Children->Append(s1);
+	PlayerPanel->Children->Append(e1);
 
 	Image^ PassButton = ref new Image();
-	PassButton->Source = ref new BitmapImage(ref new Uri(defaultAppSettings::defaultAdditionalIcons[1]));
+	PassButton->Source = ref new BitmapImage(ref new Uri(defaultAppSettings::defaultActionIcons[1]));
 	PassButton->Width = bp->PanelWidth;
 	PassButton->Height = bp->PanelWidth;
 
@@ -163,12 +161,34 @@ void MatchPage::InitScorePanels()
 			if (res->GetResults()->Label == "Pass") {
 				bp->currentMatch->matchSkipTurn();
 				UpdateIcons();
-				//and check for match end
 			}
 		});
 	});
 
-	PassCont->Children->Append(PassButton);
+	Image^ ResignButton = ref new Image();
+	ResignButton->Source = ref new BitmapImage(ref new Uri(defaultAppSettings::defaultActionIcons[0]));
+	ResignButton->Width = bp->PanelWidth;
+	ResignButton->Height = bp->PanelWidth;
+
+	ResignButton->Tapped += ref new TappedEventHandler([this](Object^ s, TappedRoutedEventArgs^ te) {
+		MessageDialog ^ msg = ref new MessageDialog("", "Are you sure you want to resign?");
+		UICommand ^ resignCommand = ref new UICommand("Resign");
+		UICommand ^ cancelCommand = ref new UICommand("Cancel");
+		msg->Commands->Append(resignCommand);
+		msg->Commands->Append(cancelCommand);
+		msg->DefaultCommandIndex = 0;
+		msg->CancelCommandIndex = 1;
+
+		msg->ShowAsync()->Completed = ref new AsyncOperationCompletedHandler<IUICommand^>([this](IAsyncOperation<IUICommand^>^ res, AsyncStatus)
+		{
+			if (res->GetResults()->Label == "Resign") {
+				//EndMatch(); 
+			}
+		});
+	});
+
+	PassPanel->Children->Append(PassButton);
+	PassPanel->Children->Append(ResignButton);
 
 	Shapes::Ellipse^ e2 = ref new Shapes::Ellipse();
 	e2->Width = 30.0;
@@ -190,8 +210,8 @@ void MatchPage::InitScorePanels()
 	s2->HorizontalAlignment = Windows::UI::Xaml::HorizontalAlignment::Center;
 	s2->Margin = Thickness(10);
 
-	OppPanelCont->Children->Append(e2);
-	OppPanelCont->Children->Append(s2);
+	OppPanel->Children->Append(e2);
+	OppPanel->Children->Append(s2);
 
 	for (unsigned int i = 2; i < bp->currentMatch->players->Size; ++i) {
 		Border^ b1 = ref new Border(); // TODO: Test?
@@ -216,9 +236,9 @@ void MatchPage::InitScorePanels()
 		s1->FontSize = 20.0;
 		s1->Margin = Thickness(10);
 
-		OppPanelCont->Children->Append(b1);
-		OppPanelCont->Children->Append(e1);
-		OppPanelCont->Children->Append(s1);
+		OppPanel->Children->Append(b1);
+		OppPanel->Children->Append(e1);
+		OppPanel->Children->Append(s1);
 	}
 }
 
@@ -280,6 +300,7 @@ void MatchPage::OrientHandler(Object ^ s, SizeChangedEventArgs ^ sce)
 		BottomPanel->Orientation = Orientation::Horizontal;
 		OppPanel->Orientation = Orientation::Horizontal;
 		PlayerPanel->Orientation = Orientation::Horizontal;
+		PassPanel->Orientation = Orientation::Horizontal;
 
 		TopPanel->Height = bp->PanelWidth;
 		TopPanel->Width = bp->AppSpaceWidth;
@@ -288,6 +309,17 @@ void MatchPage::OrientHandler(Object ^ s, SizeChangedEventArgs ^ sce)
 
 		LayoutRoot->SetTop(BottomPanel, bp->AppSpaceHeight - BottomPanel->Height);
 		LayoutRoot->SetLeft(BottomPanel, 0.0);
+
+		PlayerPanelCont->Width = bp->AppSpaceWidth / 2;
+		PlayerPanelCont->Height = bp->PanelWidth;
+		PassCont->Width = bp->AppSpaceWidth / 2;
+		PassCont->Height = bp->PanelWidth;
+
+		PassPanel->VerticalAlignment = ::VerticalAlignment::Center;
+		PassPanel->HorizontalAlignment = ::HorizontalAlignment::Left;
+		PlayerPanel->VerticalAlignment = ::VerticalAlignment::Center;
+		PlayerPanel->HorizontalAlignment = ::HorizontalAlignment::Right;
+
 	}
 	else {
 
@@ -295,6 +327,7 @@ void MatchPage::OrientHandler(Object ^ s, SizeChangedEventArgs ^ sce)
 		BottomPanel->Orientation = Orientation::Vertical;
 		OppPanel->Orientation = Orientation::Vertical;
 		PlayerPanel->Orientation = Orientation::Vertical;
+		PassPanel->Orientation = Orientation::Vertical;
 
 		TopPanel->Height = bp->AppSpaceHeight;
 		TopPanel->Width = bp->PanelWidth;
@@ -303,5 +336,16 @@ void MatchPage::OrientHandler(Object ^ s, SizeChangedEventArgs ^ sce)
 
 		LayoutRoot->SetTop(BottomPanel, 0.0);
 		LayoutRoot->SetLeft(BottomPanel, bp->AppSpaceWidth - BottomPanel->Width);
+
+		PlayerPanelCont->Width = bp->PanelWidth;
+		PlayerPanelCont->Height = bp->AppSpaceHeight / 2;
+		PassCont->Width = bp->PanelWidth;
+		PassCont->Height = bp->AppSpaceHeight / 2;
+
+		PassPanel->VerticalAlignment = ::VerticalAlignment::Top;
+		PassPanel->HorizontalAlignment = ::HorizontalAlignment::Center;
+		PlayerPanel->VerticalAlignment = ::VerticalAlignment::Bottom;
+		PlayerPanel->HorizontalAlignment = ::HorizontalAlignment::Center;
+
 	}
 }

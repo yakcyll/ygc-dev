@@ -48,7 +48,7 @@ bool VectorSetAdd(Vector<Point>^ vec1, Vector<Point>^ vec2)
 	return true;
 }
 
-Vector<Point>^ getNeighbors(Point size, Point coord)
+Vector<Point>^ Go19::getNeighbors(Point coord, Point size)
 {
 	Vector<Point>^ neighbors = ref new Vector<Point>();
 
@@ -60,7 +60,7 @@ Vector<Point>^ getNeighbors(Point size, Point coord)
 	return neighbors;
 }
 
-Vector<Point>^ getLiberties(ygcBoard^ b, Point coord)
+Vector<Point>^ Go19::getLiberties(ygcBoard^ b, Point coord)
 {
 	Vector<Point>^ liberties = ref new Vector<Point>();
 
@@ -69,7 +69,7 @@ Vector<Point>^ getLiberties(ygcBoard^ b, Point coord)
 	floodfillColor->increment();
 	*b->GetAt(coord) = *floodfillColor;
 
-	Vector<Point>^ neighbors = getNeighbors(Point(b->sBoardWidth, b->sBoardHeight), coord);
+	Vector<Point>^ neighbors = getNeighbors(coord, Point(b->sBoardWidth, b->sBoardHeight));
 	for (Point neighbor : neighbors) {
 		if (*b->GetAt(neighbor) == *myColor)
 			VectorSetAdd(liberties, getLiberties(b, neighbor));
@@ -81,7 +81,7 @@ Vector<Point>^ getLiberties(ygcBoard^ b, Point coord)
 	return liberties;
 }
 
-bool inAtari(ygcBoard^ board, Point coord, bool killed = false)
+bool Go19::inAtari(ygcBoard^ board, Point coord, bool killed)
 {
 	ygcBoard^ b = ref new ygcBoard(board);
 	return getLiberties(b, coord)->Size == (killed ? 0 : 1);
@@ -99,7 +99,7 @@ bool Go19::bGo19_IsLegal(ygcMatch^ m, Point coord)
 		return false;
 
 	bool suicide = true;
-	for (Point neighbor : getNeighbors(Point(m->board->sBoardWidth, m->board->sBoardHeight), coord)) {
+	for (Point neighbor : getNeighbors(coord, Point(m->board->sBoardWidth, m->board->sBoardHeight))) {
 		if (*m->board->GetAt(neighbor) == 0)
 			suicide = false;
 		else if (*m->board->GetAt(neighbor) == *m->turn) {
@@ -118,7 +118,7 @@ bool Go19::bGo19_IsLegal(ygcMatch^ m, Point coord)
 }
 
 
-Vector<Point>^ getChainPoints(ygcBoard^ b, Point coord)
+Vector<Point>^ Go19::getChainPoints(ygcBoard^ b, Point coord)
 {
 	Vector<Point>^ stones = ref new Vector<Point>();
 	stones->Append(coord);
@@ -128,7 +128,7 @@ Vector<Point>^ getChainPoints(ygcBoard^ b, Point coord)
 	floodfillColor->increment();
 	*b->GetAt(coord) = *floodfillColor;
 
-	Vector<Point>^ neighbors = getNeighbors(Point(b->sBoardWidth, b->sBoardHeight), coord);
+	Vector<Point>^ neighbors = getNeighbors(coord, Point(b->sBoardWidth, b->sBoardHeight));
 
 	uint32_t tmp;
 	for (Point neighbor : neighbors) {
@@ -141,34 +141,27 @@ Vector<Point>^ getChainPoints(ygcBoard^ b, Point coord)
 	return stones;
 }
 
-uint16_t Go19::vGo19_SearchForPrisoners(ygcMatch^ m, Point coord)
+Vector<Point>^ Go19::vGo19_SearchForPrisoners(ygcMatch^ m, Point coord)
 {
 	ygcBoard^ b;
 	Vector<Point>^ stones;
-	uint16_t cap_count = 0;
 
 	Go19::Go19StoneColor^ oc = ref new Go19::Go19StoneColor(*m->turn);
 	oc->increment();
 
-	for (Point neighbor : getNeighbors(Point(m->board->sBoardWidth, m->board->sBoardHeight), coord)) {
+	for (Point neighbor : getNeighbors(coord, Point(m->board->sBoardWidth, m->board->sBoardHeight))) {
 		if (*m->board->GetAt(neighbor) == *oc) {
 			if (inAtari(m->board, neighbor, true)) {
 				b = ref new ygcBoard(m->board);
 				stones = getChainPoints(b, neighbor);
-
-				for (Point p : stones) {
-					// the only way i know that will, given the current state of how class hierarchy is structured, allow for notifying the ui of changes to the board.
-					m->board->fields->SetAt((uint16_t)p.Y * m->board->sBoardWidth + (uint16_t)p.X, ref new Go19::Go19StoneColor(Go19::Go19StoneColor::EMPTY));
-					++cap_count;
-				}
 			}
 		}
 	}
 
-	if (cap_count == 1)
+	if (stones && stones->Size == 1)
 		((Go19Match^)m)->koPoint = stones->GetAt(0);
 	else
 		((Go19Match^)m)->koPoint = Point(-1, -1);
 
-	return cap_count;
+	return stones;
 }

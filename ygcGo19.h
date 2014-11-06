@@ -32,8 +32,13 @@ namespace ygc {
 		const uint16_t Go19BoardHeight = 19;
 		const uint16_t Go19BoardWidth = 19;
 
+		Vector<Point>^ getNeighbors(Point, Point);
+		Vector<Point>^ getLiberties(ygcBoard^, Point);
+		Vector<Point>^ getChainPoints(ygcBoard^, Point);
+		bool inAtari(ygcBoard^, Point, bool = false);
+
 		bool bGo19_IsLegal(ygcMatch^, Point);
-		uint16_t vGo19_SearchForPrisoners(ygcMatch^, Point);
+		Vector<Point>^ vGo19_SearchForPrisoners(ygcMatch^, Point);
 
 		const static moveValidator defaultMoveValidators[2] = { bGo19_IsLegal, NULL };
 		const static postMoveAction defaultPostMoveActions[2] = { vGo19_SearchForPrisoners, NULL };

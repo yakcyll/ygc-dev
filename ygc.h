@@ -23,7 +23,7 @@ namespace ygc {
 	ref class ygcMatch;
 
 	typedef bool(*moveValidator)(ygcMatch^, Point);
-	typedef uint16_t(*postMoveAction)(ygcMatch^, Point);
+	typedef Vector<Point>^(*postMoveAction)(ygcMatch^, Point);
 
 	enum ygcPlayerInputType { DUMMY, SCREEN, WIFI, BT, IGS, AI, SPEC };
 	enum ygcStoneStatus { ADDED, FALLEN };
@@ -62,12 +62,11 @@ namespace ygc {
 
 	private ref class ygcStoneChange {
 	internal:
-		ygcStoneColor^ whose;
+		ygcStoneColor whose;
 		ygcStoneStatus status;
-		uint16_t x;
-		uint16_t y;
+		Point coord;
 
-		ygcStoneChange(ygcStoneColor^ w, ygcStoneStatus s, uint16_t x1, uint16_t y1) : whose(w), status(s), x(x1), y(y1) {}
+		ygcStoneChange(ygcStoneColor y, ygcStoneStatus s, Point c) : whose(y), status(s), coord(c) {}
 	};
 
 	private ref class ygcMove sealed {
@@ -101,7 +100,6 @@ namespace ygc {
 	internal:
 		String^ name;
 		ygcStoneColor^ color;
-		uint32_t stonesTaken;
 		double score;
 
 		bool ready;
@@ -136,15 +134,16 @@ namespace ygc {
 		ygcRules^ matchRules;
 
 		ygcMatchState matchState;
-		uint16_t moveid;
+		uint16_t moveId, passCount;
 		Vector<ygcMove^>^ moveHistory;
 		ygcStoneColor^ turn;			// this might be superficial; still too useful
 
 		ygcMatch();
 		
-		bool matchMoveBack(unsigned int);
-		bool matchMoveForward(unsigned int);
+		bool matchMoveBack(uint16_t = 1);
+		bool matchMoveForward(uint16_t = 1);
 		bool matchMakeMove(Point);
+		bool matchSkipTurn(uint16_t = 1);
 
 	};
 

@@ -10,24 +10,48 @@ using namespace Windows::Foundation;
 
 /* ygcMatch method implementation */
 
-ygcMatch::ygcMatch() : board(nullptr), turn(nullptr)
+ygcMatch::ygcMatch() : board(nullptr), turn(nullptr), passCount(0), moveId(0), matchState(ygcMatchState::ACTIVE)
 {
 	players = ref new Vector<ygcPlayer^>();
 
 	matchRules = ref new ygcRules();
 
-	matchState = ygcMatchState::ACTIVE;
-	moveid = 0;
 	moveHistory = ref new Vector<ygcMove^>();
 }
 
-bool ygcMatch::matchMoveBack(unsigned int count)
+bool ygcMatch::matchMoveBack(uint16_t count)
 {
+	--moveId;
+	ygcMove^ lastMove = moveHistory->GetAt(moveId);
+	for (auto i = lastMove->stonesChanged.First(); i->HasCurrent; i->MoveNext()) {
+		uint16_t playerIndex = (int)i->Current->whose - 1;
+
+		if (i->Current->status == ygcStoneStatus::ADDED) {
+			*board->GetAt(i->Current->coord) = 0;
+		}
+		else if (i->Current->status == ygcStoneStatus::FALLEN) {
+			*board->GetAt(i->Current->coord) = i->Current->whose;
+		}
+	}
+
 	return true;
 }
 
-bool ygcMatch::matchMoveForward(unsigned int count)
+bool ygcMatch::matchMoveForward(uint16_t count)
 {
+	ygcMove^ lastMove = moveHistory->GetAt(moveId);
+	for (auto i = lastMove->stonesChanged.First(); i->HasCurrent; i->MoveNext()) {
+		uint16_t playerIndex = (int)i->Current->whose - 1;
+
+		if (i->Current->status == ygcStoneStatus::ADDED) {
+			*board->GetAt(i->Current->coord) = i->Current->whose;
+		}
+		else if (i->Current->status == ygcStoneStatus::FALLEN) {
+			*board->GetAt(i->Current->coord) = 0;
+		}
+	}
+	++moveId;
+
 	return true;
 }
 
@@ -38,19 +62,50 @@ bool ygcMatch::matchMakeMove(Point coord)
 			return false;
 
 	ygcMove^ move = ref new ygcMove();
-	move->stonesChanged.Append(ref new ygcStoneChange(this->turn, ygcStoneStatus::ADDED, (uint16_t)coord.X, (uint16_t)coord.Y));
+	Vector<Point>^ stonesChanged = nullptr;
+
+	if (moveHistory->Size != moveId) {
+		while (moveHistory->Size != moveId)
+			moveHistory->RemoveAtEnd(); // remove one prior to last one
+	}
+
+	move->stonesChanged.Append(ref new ygcStoneChange(*this->turn, ygcStoneStatus::ADDED, coord));
 	moveHistory->Append(move);
 
 	*board->GetAt(coord) = *turn;
 
 	for (auto f : matchRules->postMoves)
-		players->GetAt((int)*turn - 1)->score += f(this, coord);
+		stonesChanged = f(this, coord); // TODO: probably should be +=, maybe VectorSetAdd?
+
+	if (stonesChanged) {
+		for (unsigned i = 0; i < stonesChanged->Size; ++i) {
+			Point p = stonesChanged->GetAt(i);
+			move->stonesChanged.Append(ref new ygcStoneChange(*board->GetAt(p), ygcStoneStatus::FALLEN, p));
+			*board->fields->GetAt((uint16_t)p.Y * board->sBoardWidth + (uint16_t)p.X) = 0; // TODO: default action - stone removal?
+		}
+
+		players->GetAt((int)turn - 1)->score += stonesChanged->Size;
+	}
 
 	turn->increment();
-
-	moveid++;
+	passCount = 0;
+	moveId++;
 
 	return true;
+
+}
+
+bool ygcMatch::matchSkipTurn(uint16_t count)
+{
+	if (count >= players->Size)
+		return false;
+
+	while (count--) {
+		++passCount;
+		turn->increment();
+	}
+
+	return passCount < players->Size;
 }
 
 /* ygcBoard method implementation */
@@ -107,7 +162,6 @@ ygcPlayer::ygcPlayer(ygcMatch^ currentMatch, ygcStoneColor^ stonecolor, ygcPlaye
 void ygcPlayer::initPlayer(ygcMatch^ currentMatch, ygcPlayerInputType ypiType)
 {
 	name = "Player";
-	stonesTaken = 0;
 	ready = false;
 	passed = false;
 	activeMatch = currentMatch;

@@ -93,7 +93,7 @@ void App::OnLaunched(LaunchActivatedEventArgs^ e)
 		// When the navigation stack isn't restored navigate to the first page,
 		// configuring the new page by passing required information as a navigation
 		// parameter.
-		if (!rootFrame->Navigate(MatchPage::typeid, e->Arguments))
+		if (!rootFrame->Navigate(EditorPage::typeid, e->Arguments))
 		{
 			throw ref new FailureException("Failed to create initial page");
 		}

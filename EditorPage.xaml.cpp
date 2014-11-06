@@ -23,8 +23,8 @@ using namespace Windows::UI::Xaml::Navigation;
 
 // The Blank Page item template is documented at http://go.microsoft.com/fwlink/?LinkId=390556
 
-EditorPage::EditorPage() : historyModeEnabled(false), moveId(0), noPlayers(2), mixedStonesEnabled(true), 
-						   turn(ref new Go19::Go19StoneColor(Go19::Go19StoneColor::BLACK)), historyTurn(ref new Go19::Go19StoneColor())
+EditorPage::EditorPage() : historyModeEnabled(false), moveId(0), checkPointId(0), noPlayers(2), mixedStonesEnabled(true), 
+						   historyTurn(ref new Go19::Go19StoneColor(Go19::Go19StoneColor::BLACK))
 {
 	InitializeComponent();
 
@@ -35,6 +35,8 @@ EditorPage::EditorPage() : historyModeEnabled(false), moveId(0), noPlayers(2), m
 	playerScores = ref new Array<uint16_t>(noPlayers);
 
 	InitBoard();
+	turn = bp->currentMatch->turn;
+
 	InitPanels();
 	InitInputHandler();
 
@@ -50,6 +52,9 @@ void EditorPage::InitBoard()
 	for (uint16_t i = 0; i < bp->currentMatch->board->sBoardWidth; ++i)
 		for (uint16_t j = 0; j < bp->currentMatch->board->sBoardHeight; ++j)
 			bp->currentMatch->board->SetAt(Point(i, j), Go19::Go19StoneColor(Go19::Go19StoneColor::EMPTY));
+
+	bp->currentMatch->players->Append(ref new ygcPlayer(bp->currentMatch, ref new Go19::Go19StoneColor(Go19::Go19StoneColor::BLACK), ygcPlayerInputType::SCREEN, "Player1"));
+	bp->currentMatch->players->Append(ref new ygcPlayer(bp->currentMatch, ref new Go19::Go19StoneColor(Go19::Go19StoneColor::WHITE), ygcPlayerInputType::SCREEN, "Player2"));
 
 	bp->InitUI();
 }
@@ -158,11 +163,11 @@ void EditorPage::InitPanels()
 	stoneBrush->Width = bp->PanelWidth;
 	stoneBrush->Height = bp->PanelWidth;
 
-	stoneBrush->Tapped += ref new TappedEventHandler([this](Object^ s, TappedRoutedEventArgs^ e){
-		if (historyModeEnabled)
-			return;
-		if (mixedStonesEnabled)
+	stoneBrush->Tapped += ref new TappedEventHandler([this](Object^ s, TappedRoutedEventArgs^ e) {
+		if (mixedStonesEnabled) {
 			mixedStonesEnabled = false;
+			*turn = 1;
+		}
 		else {
 			turn->increment();
 			if (*turn == 1)
@@ -171,19 +176,25 @@ void EditorPage::InitPanels()
 		UpdateIcons();
 	});
 
-	editMode = ref new Image();
-	editMode->Source = ref new BitmapImage(ref new Uri(defaultAppSettings::defaultModeIcons[0]));
-	editMode->Width = bp->PanelWidth;
-	editMode->Height = bp->PanelWidth;
+	checkPoint = ref new Image();
+	checkPoint->Source = ref new BitmapImage(ref new Uri(defaultAppSettings::defaultModeIcons[0]));
+	checkPoint->Width = bp->PanelWidth;
+	checkPoint->Height = bp->PanelWidth;
 
-	editMode->Tapped += ref new TappedEventHandler([this](Object^ s, TappedRoutedEventArgs^ e){
+	checkPoint->Tapped += ref new TappedEventHandler([this](Object^ s, TappedRoutedEventArgs^ e) {
 		if (historyModeEnabled) {
-			RewindHistory();
+			RewindHistory(true);
 			*turn = *historyTurn;
+			for (auto i = 0; i < noPlayers; ++i)
+				scoreTBs[i]->Text = playerScores[i].ToString();
+			checkPointId = 0;
+			*historyTurn = 1;
 		}
-		else
+		else {
+			checkPointId = moveId;
 			*historyTurn = *turn;
-
+		}
+			
 		historyModeEnabled = !historyModeEnabled;
 		UpdateIcons();
 	});
@@ -193,10 +204,7 @@ void EditorPage::InitPanels()
 	clearBoard->Width = bp->PanelWidth;
 	clearBoard->Height = bp->PanelWidth;
 
-	clearBoard->Tapped += ref new TappedEventHandler([this](Object^ s, TappedRoutedEventArgs^ e){
-		if (historyModeEnabled)
-			return;
-
+	clearBoard->Tapped += ref new TappedEventHandler([this](Object^ s, TappedRoutedEventArgs^ e) {
 		bp->ClearBoard();
 		for (auto i = 0; i < noPlayers; ++i) {
 			playerScores[i] = 0;
@@ -207,7 +215,7 @@ void EditorPage::InitPanels()
 	});
 
 	TPMode->Children->Append(stoneBrush);
-	TPMode->Children->Append(editMode);
+	TPMode->Children->Append(checkPoint);
 	TPMode->Children->Append(clearBoard);
 
 	hRewind = ref new Image();
@@ -215,8 +223,8 @@ void EditorPage::InitPanels()
 	hRewind->Width = bp->PanelWidth;
 	hRewind->Height = bp->PanelWidth;
 
-	hRewind->Tapped += ref new TappedEventHandler([this](Object^ s, TappedRoutedEventArgs^ te){
-		if (historyModeEnabled && moveId != 0) {
+	hRewind->Tapped += ref new TappedEventHandler([this](Object^ s, TappedRoutedEventArgs^ te) {
+		if (moveId != 0) {
 			RewindHistory();
 			*turn = *historyTurn;
 			UpdateIcons();
@@ -228,13 +236,15 @@ void EditorPage::InitPanels()
 	hPrev->Width = bp->PanelWidth;
 	hPrev->Height = bp->PanelWidth;
 
-	hPrev->Tapped += ref new TappedEventHandler([this](Object^ s, TappedRoutedEventArgs^ te){
-		if (!historyModeEnabled || moveId == 0)
+	hPrev->Tapped += ref new TappedEventHandler([this](Object^ s, TappedRoutedEventArgs^ te) {
+		if (moveId == 0)
 			return;
 
 		--moveId;
 		ygcMove^ lastMove = bp->currentMatch->moveHistory->GetAt(moveId);
 		UpdateBoard(lastMove, false);
+
+		bp->currentMatch->matchMoveBack();
 
 		*turn = turn->previous();
 		UpdateIcons();
@@ -245,13 +255,15 @@ void EditorPage::InitPanels()
 	hNext->Width = bp->PanelWidth;
 	hNext->Height = bp->PanelWidth;
 
-	hNext->Tapped += ref new TappedEventHandler([this](Object^ s, TappedRoutedEventArgs^ e){
-		if (!historyModeEnabled || moveId == bp->currentMatch->moveHistory->Size)
+	hNext->Tapped += ref new TappedEventHandler([this](Object^ s, TappedRoutedEventArgs^ e) {
+		if (moveId == bp->currentMatch->moveHistory->Size)
 			return;
 
 		ygcMove^ lastMove = bp->currentMatch->moveHistory->GetAt(moveId);
 		UpdateBoard(lastMove, true);
 		++moveId;
+		
+		bp->currentMatch->matchMoveForward();
 
 		turn->increment();
 		UpdateIcons();
@@ -264,7 +276,7 @@ void EditorPage::InitPanels()
 
 void EditorPage::InitInputHandler()
 {
-	bp->boardGrid->Tapped += ref new TappedEventHandler([this](Object^ s, RoutedEventArgs^ e){
+	bp->boardGrid->Tapped += ref new TappedEventHandler([this](Object^ s, RoutedEventArgs^ e) {
 		
 		Canvas^ c = (Canvas^)s;
 		TappedRoutedEventArgs^ te = (TappedRoutedEventArgs^)e;
@@ -282,43 +294,46 @@ void EditorPage::InitInputHandler()
 		Point coord = Point(x, y);
 
 		if (*board->GetAt(coord) == 0) {
-
-			bp->AddStone(coord, *turn);
-
-			if (historyModeEnabled) {
-				if (bp->currentMatch->moveHistory->Size != moveId) {
-					while (bp->currentMatch->moveHistory->Size != moveId)
-						bp->currentMatch->moveHistory->RemoveAtEnd();
-					UpdateIcons();
-				}
-
-				hRewind->Opacity = 1.0;
-				hPrev->Opacity = 1.0;
-
-				ygcMove ^ move = ref new ygcMove();
-				move->stonesChanged.Append(ref new ygcStoneChange(ref new ygcStoneColor(*turn), ygcStoneStatus::ADDED, x, y));
-				bp->currentMatch->moveHistory->Append(move);
-				++moveId;
-				
-			}
-
+			ygcMove ^ move;
 			uint16_t playerIndex = (int)turn - 1;
+			Vector<Point>^ changedStones = nullptr;
+
+			if (!bp->currentMatch->matchMakeMove(coord))
+				return;
+
+			bp->AddStone(coord, turn->previous());
+
+			++moveId;
+
+			hRewind->Opacity = 1.0;
+			hPrev->Opacity = 1.0;
+
+			if (!mixedStonesEnabled)
+				*turn = turn->previous();
+
 			++playerScores[playerIndex];
 			scoreTBs[playerIndex]->Text = playerScores[playerIndex].ToString();
 
-			if (historyModeEnabled || mixedStonesEnabled) {
-				turn->increment();
-				turnIndicator->Source = ref new BitmapImage(ref new Uri(defaultAppSettings::defaultEditIcons[turn]));
+			move = bp->currentMatch->moveHistory->GetAt(bp->currentMatch->moveHistory->Size - 1);
+			for (unsigned i = 0; i < move->stonesChanged.Size; ++i) {
+				ygcStoneChange^ ysc = move->stonesChanged.GetAt(i);
+				if (ysc->status == ygcStoneStatus::FALLEN) {
+					--playerScores[(int)ysc->whose - 1];
+					bp->RemoveStone(ysc->coord);
+				}
 			}
+			
+			UpdateIcons();
 
 		}
 		else {
-			if (historyModeEnabled)
-				return;
-
 			uint16_t playerIndex = (int)*bp->currentMatch->board->GetAt(coord) - 1;
+			ygcMove^ move = ref new ygcMove();
+			move->stonesChanged.Append(ref new ygcStoneChange(*bp->currentMatch->board->GetAt(Point(x, y)), ygcStoneStatus::FALLEN, Point(x, y)));
+			bp->currentMatch->moveHistory->Append(move);
 
 			bp->RemoveStone(coord);
+			*bp->currentMatch->board->GetAt(coord) = 0;
 
 			--playerScores[playerIndex];
 			scoreTBs[playerIndex]->Text = playerScores[playerIndex].ToString();
@@ -329,33 +344,19 @@ void EditorPage::InitInputHandler()
 void EditorPage::UpdateIcons()
 {
 	turnIndicator->Source = ref new BitmapImage(ref new Uri(defaultAppSettings::defaultEditIcons[turn]));
-	editMode->Source = ref new BitmapImage(ref new Uri(defaultAppSettings::defaultModeIcons[(int)historyModeEnabled]));
+	checkPoint->Source = ref new BitmapImage(ref new Uri(defaultAppSettings::defaultModeIcons[(int)historyModeEnabled]));
 
-	if (historyModeEnabled) {
-		stoneBrush->Opacity = 0.5;
-		clearBoard->Opacity = 0.5;
-
-		//silly looking bit, but has to cover 0 == bp->currentMatch->moveHistory->Size
-		if (moveId == bp->currentMatch->moveHistory->Size)
-			hNext->Opacity = 0.5;
-		else
-			hNext->Opacity = 1.0;
-		if (moveId == 0) {
-			hRewind->Opacity = 0.5;
-			hPrev->Opacity = 0.5;
-		}
-		else {
-			hRewind->Opacity = 1.0;
-			hPrev->Opacity = 1.0;
-		}
-
+	if (moveId == bp->currentMatch->moveHistory->Size)
+		hNext->Opacity = 0.5;
+	else
+		hNext->Opacity = 1.0;
+	if (moveId == 0) {
+		hRewind->Opacity = 0.5;
+		hPrev->Opacity = 0.5;
 	}
 	else {
-		stoneBrush->Opacity = 1.0;
-		clearBoard->Opacity = 1.0;
-		hRewind->Opacity = 0.5;
-		hNext->Opacity = 0.5;
-		hPrev->Opacity = 0.5;
+		hRewind->Opacity = 1.0;
+		hPrev->Opacity = 1.0;
 	}
 
 	if (mixedStonesEnabled)
@@ -370,31 +371,32 @@ void EditorPage::UpdateBoard(ygcMove^ lastMove, bool forward)
 	// O(n*m)
 	// TODO: find a less complex alternative
 	for (auto i = lastMove->stonesChanged.First(); i->HasCurrent; i->MoveNext()) {
-		uint16_t playerIndex = (int)*i->Current->whose - 1;
+		uint16_t playerIndex = (int)i->Current->whose - 1;
 
 		if ((i->Current->status == ygcStoneStatus::ADDED && !forward) || (i->Current->status == ygcStoneStatus::FALLEN && forward)) {
 			//remove
-			bp->RemoveStone(Point(i->Current->x, i->Current->y));
-			--playerScores[playerIndex];
+			if (bp->RemoveStone(i->Current->coord))
+				--playerScores[playerIndex];
 		}
 		else if ((i->Current->status == ygcStoneStatus::ADDED && forward) || (i->Current->status == ygcStoneStatus::FALLEN && !forward)) {
 			// add
-			bp->AddStone(Point(i->Current->x, i->Current->y), *i->Current->whose);
+			bp->AddStone(i->Current->coord, i->Current->whose);
 			++playerScores[playerIndex];
 		}
 		scoreTBs[playerIndex]->Text = playerScores[playerIndex].ToString();
 	}
 }
 
-void EditorPage::RewindHistory()
+void EditorPage::RewindHistory(bool clear)
 {
-	while (moveId) {
+	while (moveId != checkPointId) {
 		--moveId;
 		ygcMove^ lastMove = bp->currentMatch->moveHistory->GetAt(moveId);
 		UpdateBoard(lastMove, false);
+		bp->currentMatch->matchMoveBack();
+		if (clear) bp->currentMatch->moveHistory->RemoveAtEnd();
 	}
-
-	bp->currentMatch->moveHistory->Clear();
+	*turn = *historyTurn;
 }
 
 

@@ -18,11 +18,11 @@ namespace ygc
 		Border ^ CPCountBorder, ^CPIndBorder, ^ TPModeBorder, ^TPHistoryBorder;
 		Canvas ^ LayoutRoot;
 
-		Image ^ turnIndicator, ^ stoneBrush, ^ editMode, ^ clearBoard, ^ hRewind, ^ hPrev, ^ hNext;
+		Image ^ turnIndicator, ^ stoneBrush, ^ checkPoint, ^ clearBoard, ^ hRewind, ^ hPrev, ^ hNext;
 
 		Array<TextBlock^>^ scoreTBs;
 		Array<uint16_t>^ playerScores;
-		uint16_t moveId, noPlayers;
+		uint16_t moveId, checkPointId, noPlayers;
 		ygcStoneColor ^ turn, ^ historyTurn;
 		bool historyModeEnabled;
 		bool mixedStonesEnabled;
@@ -35,7 +35,7 @@ namespace ygc
 
 		void UpdateIcons();
 		void UpdateBoard(ygcMove ^, bool);
-		void RewindHistory();
+		void RewindHistory(bool = false);
 
 	public:
 		EditorPage();

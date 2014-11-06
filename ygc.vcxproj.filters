@@ -100,6 +100,12 @@
     <Image Include="Assets\board_assets\appbar.page.png">
       <Filter>Assets\board_assets</Filter>
     </Image>
+    <Image Include="Assets\board_assets\appbar.hourglass.png">
+      <Filter>Assets\board_assets</Filter>
+    </Image>
+    <Image Include="Assets\board_assets\appbar.flag.wavy.png">
+      <Filter>Assets\board_assets</Filter>
+    </Image>
   </ItemGroup>
   <ItemGroup>
     <Page Include="MatchPage.xaml" />
