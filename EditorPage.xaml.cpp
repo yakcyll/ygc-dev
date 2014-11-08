@@ -224,7 +224,7 @@ void EditorPage::InitPanels()
 	hRewind->Height = bp->PanelWidth;
 
 	hRewind->Tapped += ref new TappedEventHandler([this](Object^ s, TappedRoutedEventArgs^ te) {
-		if (moveId != 0) {
+		if (moveId > checkPointId) {
 			RewindHistory();
 			*turn = *historyTurn;
 			UpdateIcons();
@@ -237,7 +237,7 @@ void EditorPage::InitPanels()
 	hPrev->Height = bp->PanelWidth;
 
 	hPrev->Tapped += ref new TappedEventHandler([this](Object^ s, TappedRoutedEventArgs^ te) {
-		if (moveId == 0)
+		if (moveId <= checkPointId)
 			return;
 
 		--moveId;
@@ -303,11 +303,6 @@ void EditorPage::InitInputHandler()
 
 			bp->AddStone(coord, turn->previous());
 
-			++moveId;
-
-			hRewind->Opacity = 1.0;
-			hPrev->Opacity = 1.0;
-
 			if (!mixedStonesEnabled)
 				*turn = turn->previous();
 
@@ -331,6 +326,7 @@ void EditorPage::InitInputHandler()
 			ygcMove^ move = ref new ygcMove();
 			move->stonesChanged.Append(ref new ygcStoneChange(*bp->currentMatch->board->GetAt(Point(x, y)), ygcStoneStatus::FALLEN, Point(x, y)));
 			bp->currentMatch->moveHistory->Append(move);
+			++bp->currentMatch->moveId;
 
 			bp->RemoveStone(coord);
 			*bp->currentMatch->board->GetAt(coord) = 0;
@@ -338,6 +334,12 @@ void EditorPage::InitInputHandler()
 			--playerScores[playerIndex];
 			scoreTBs[playerIndex]->Text = playerScores[playerIndex].ToString();
 		}
+
+		++moveId;
+
+		hRewind->Opacity = 1.0;
+		hPrev->Opacity = 1.0;
+
 	});
 }
 
@@ -350,7 +352,7 @@ void EditorPage::UpdateIcons()
 		hNext->Opacity = 0.5;
 	else
 		hNext->Opacity = 1.0;
-	if (moveId == 0) {
+	if (moveId == checkPointId) {
 		hRewind->Opacity = 0.5;
 		hPrev->Opacity = 0.5;
 	}
@@ -389,7 +391,7 @@ void EditorPage::UpdateBoard(ygcMove^ lastMove, bool forward)
 
 void EditorPage::RewindHistory(bool clear)
 {
-	while (moveId != checkPointId) {
+	while (moveId > checkPointId) {
 		--moveId;
 		ygcMove^ lastMove = bp->currentMatch->moveHistory->GetAt(moveId);
 		UpdateBoard(lastMove, false);
