@@ -211,6 +211,7 @@ void EditorPage::InitPanels()
 			scoreTBs[i]->Text = playerScores[i].ToString();
 		}
 		*turn = 1;
+		moveId = 0;
 		UpdateIcons();
 	});
 
@@ -318,6 +319,8 @@ void EditorPage::InitInputHandler()
 				}
 			}
 			
+			++moveId;
+
 			UpdateIcons();
 
 		}
@@ -327,6 +330,7 @@ void EditorPage::InitInputHandler()
 			move->stonesChanged.Append(ref new ygcStoneChange(*bp->currentMatch->board->GetAt(Point(x, y)), ygcStoneStatus::FALLEN, Point(x, y)));
 			bp->currentMatch->moveHistory->Append(move);
 			++bp->currentMatch->moveId;
+			++moveId;
 
 			bp->RemoveStone(coord);
 			*bp->currentMatch->board->GetAt(coord) = 0;
@@ -334,8 +338,6 @@ void EditorPage::InitInputHandler()
 			--playerScores[playerIndex];
 			scoreTBs[playerIndex]->Text = playerScores[playerIndex].ToString();
 		}
-
-		++moveId;
 
 		hRewind->Opacity = 1.0;
 		hPrev->Opacity = 1.0;

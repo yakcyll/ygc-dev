@@ -1,5 +1,5 @@
 /*
-* ygcGo19.cpp
+* Go19.cpp
 * default (Tromp-Taylor, bar superko) rules implementation
 */
 
@@ -144,7 +144,7 @@ Vector<Point>^ Go19::getChainPoints(ygcBoard^ b, Point coord)
 Vector<Point>^ Go19::vGo19_SearchForPrisoners(ygcMatch^ m, Point coord)
 {
 	ygcBoard^ b;
-	Vector<Point>^ stones;
+	Vector<Point>^ stones = ref new Vector<Point>();
 
 	Go19::Go19StoneColor^ oc = ref new Go19::Go19StoneColor(*m->turn);
 	oc->increment();
@@ -153,7 +153,7 @@ Vector<Point>^ Go19::vGo19_SearchForPrisoners(ygcMatch^ m, Point coord)
 		if (*m->board->GetAt(neighbor) == *oc) {
 			if (inAtari(m->board, neighbor, true)) {
 				b = ref new ygcBoard(m->board);
-				stones = getChainPoints(b, neighbor);
+				VectorSetAdd(stones, getChainPoints(b, neighbor));
 			}
 		}
 	}

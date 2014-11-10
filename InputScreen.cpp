@@ -1,5 +1,5 @@
 /*
-* ygcInputScreen.cpp
+* InputScreen.cpp
 * screen input handler implementation
 */
 

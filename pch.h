@@ -10,7 +10,9 @@
 #include "App.xaml.h"
 
 #include "ygc.h"
-#include "ygcInputScreen.h"
+#include "SGFParser.h"
 
-#include "ygcGo19.h"
-#include "ygcDefaultSettings.h"
+#include "InputScreen.h"
+
+#include "Go19.h"
+#include "DefaultSettings.h"

@@ -1,5 +1,5 @@
 /*
-* ygcInputScreen.h
+* InputScreen.h
 * screen input handler header file
 */
 

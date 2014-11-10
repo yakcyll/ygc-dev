@@ -1,5 +1,5 @@
 /*
-* ygcGo19.h
+* Go19.h
 * default (Tromp-Taylor, bar superko) rules header file
 */
 

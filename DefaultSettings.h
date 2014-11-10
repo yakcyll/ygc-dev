@@ -1,5 +1,5 @@
 /*
-* ygcDefaultSettings.h
+* DefaultSettings.h
 * default app settings
 */
 
