@@ -95,8 +95,13 @@ bool Go19::bGo19_IsLegal(ygcMatch^ m, Point coord)
 	if (*m->board->GetAt(coord) != Go19::Go19StoneColor::EMPTY)
 		return false;
 
-	if (coord.Equals(((Go19Match^)m)->koPoint))
-		return false;
+	if (coord.Equals(((Go19Match^)m)->koPoint)) {
+		for (Point neighbor : getNeighbors(coord, Point(m->board->sBoardWidth, m->board->sBoardHeight))) {
+			ygcBoard^ b = ref new ygcBoard(m->board);
+			if (getChainPoints(b, neighbor)->Size == 1)
+				return false;
+		}
+	}
 
 	bool suicide = true;
 	for (Point neighbor : getNeighbors(coord, Point(m->board->sBoardWidth, m->board->sBoardHeight))) {

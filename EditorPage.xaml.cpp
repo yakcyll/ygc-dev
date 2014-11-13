@@ -212,6 +212,9 @@ void EditorPage::InitPanels()
 		}
 		*turn = 1;
 		moveId = 0;
+		checkPointId = 0;
+		historyModeEnabled = false;
+
 		UpdateIcons();
 	});
 
@@ -247,7 +250,9 @@ void EditorPage::InitPanels()
 
 		bp->currentMatch->matchMoveBack();
 
-		*turn = turn->previous();
+		if (mixedStonesEnabled && (lastMove->stonesChanged.Size != 1 || lastMove->stonesChanged.GetAt(0)->status != ygcStoneStatus::FALLEN))
+			*turn = turn->previous();
+
 		UpdateIcons();
 	});
 	
@@ -266,7 +271,9 @@ void EditorPage::InitPanels()
 		
 		bp->currentMatch->matchMoveForward();
 
-		turn->increment();
+		if (mixedStonesEnabled && (lastMove->stonesChanged.Size != 1 || lastMove->stonesChanged.GetAt(0)->status != ygcStoneStatus::FALLEN))
+			turn->increment();
+
 		UpdateIcons();
 	});
 

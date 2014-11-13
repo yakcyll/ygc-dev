@@ -66,6 +66,9 @@
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|ARM'">
+    <IncludePath>C:\boost;$(IncludePath)</IncludePath>
+  </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|ARM'">
     <ClCompile>
       <AdditionalOptions>/bigobj %(AdditionalOptions)</AdditionalOptions>
@@ -102,10 +105,11 @@
     <ClInclude Include="App.xaml.h">
       <DependentUpon>App.xaml</DependentUpon>
     </ClInclude>
+    <ClInclude Include="SGFParser.h" />
     <ClInclude Include="ygc.h" />
-    <ClInclude Include="ygcDefaultSettings.h" />
-    <ClInclude Include="ygcGo19.h" />
-    <ClInclude Include="ygcInputScreen.h" />
+    <ClInclude Include="DefaultSettings.h" />
+    <ClInclude Include="Go19.h" />
+    <ClInclude Include="InputScreen.h" />
   </ItemGroup>
   <ItemGroup>
     <ApplicationDefinition Include="App.xaml">
@@ -163,9 +167,10 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|ARM'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|ARM'">Create</PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="SGFParser.cpp" />
     <ClCompile Include="ygc.cpp" />
-    <ClCompile Include="ygcGo19.cpp" />
-    <ClCompile Include="ygcInputScreen.cpp" />
+    <ClCompile Include="Go19.cpp" />
+    <ClCompile Include="InputScreen.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
