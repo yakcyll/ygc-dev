@@ -49,9 +49,14 @@ namespace ygc {
 
 	public ref class SGFTreeNode sealed {
 	internal:
+		Vector<SGFNode^>^ sequence;
+		Vector<SGFTreeNode^>^ children;
+	};
+
+	public ref class SGFNode sealed {
+	internal:
 		Platform::String^ nodeName;
 		Map<Platform::String^, Platform::String^>^ properties;
-		Vector<SGFTreeNode^>^ children;
 	};
 
 	private class SGFParser : public grammar < SGFParser > {
