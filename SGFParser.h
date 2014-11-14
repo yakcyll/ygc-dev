@@ -10,6 +10,7 @@
 
 #include <cstdint>
 #include <map>
+#include <memory>
 #include <string>
 #include <vector>
 //#include "ygc.h"
@@ -18,6 +19,8 @@
 
 namespace qi	= boost::spirit::qi;
 namespace ascii = boost::spirit::ascii;
+
+using std::shared_ptr;
 
 namespace ygc {
 
@@ -69,39 +72,45 @@ namespace ygc {
 
 	class SGFTreeNode {
 	public:
-		SGFTreeNode* parent;
-		std::vector<SGFNode*> sequence;
-		std::vector<SGFTreeNode*> children;
+		shared_ptr<SGFTreeNode> parent;
+		std::vector<shared_ptr<SGFNode>> sequence;
+		std::vector<shared_ptr<SGFTreeNode>> children;
 
 		SGFTreeNode() : parent(nullptr) {}
 	};
 
+	typedef std::shared_ptr<SGFTreeNode> spTreeNode;
+	typedef std::shared_ptr<SGFNode> spNode;
+
+
+	//Parsers
+	
 	template <typename Iterator>
-	struct SGFParser : qi::grammar<Iterator, qi::ascii::space_type> {
+	struct SGFFileParser : qi::grammar<Iterator, qi::ascii::space_type> {
 
-		std::vector<SGFTreeNode*> games;
-		SGFTreeNode* currentGameTree;
-		SGFNode* currentNode;
+		std::vector<spTreeNode> games;
+		spTreeNode currentGameTree;
+		spNode currentNode;
 
-		SGFParser() : SGFParser::base_type(Collection), currentGameTree(nullptr), currentNode(nullptr)
+		SGFFileParser() : SGFFileParser::base_type(Collection), currentGameTree(nullptr), currentNode(nullptr)
 		{
 				Collection = +GameTree;
 				GameTree = OpenGameTree >> Sequence >> *GameTree >> CloseGameTree;
 
 				OpenGameTree = qi::lit('(')
-					[boost::phoenix::bind(&SGFParser::add_game, this)];
+					[boost::phoenix::bind(&SGFFileParser::add_game, this)];
 				CloseGameTree = qi::lit(')')
-					[boost::phoenix::bind(&SGFParser::close_game, this)];
+					[boost::phoenix::bind(&SGFFileParser::close_game, this)];
 
 				Sequence = +Node;
 				Node = (NodeSeparator >> *Property); //doesn't conform to the specification, 
 													 //but too many files during testing had empty 
 													 //nodes to just ignore it
 				NodeSeparator = (qi::lit(';'))
-					[boost::phoenix::bind(&SGFParser::add_node, this)];
+					[boost::phoenix::bind(&SGFFileParser::add_node, this)];
 
 				Property = (PropIdent >> +PropValue)
-					[boost::phoenix::bind(&SGFParser::add_property, this, qi::_1, qi::_2)];
+					[boost::phoenix::bind(&SGFFileParser::add_property, this, qi::_1, qi::_2)];
 				PropIdent = +UcLetter;
 				PropValue = qi::lit('[') >> ValueT >> qi::lit(']');
 
@@ -113,8 +122,7 @@ namespace ygc {
 
 		qi::rule<Iterator, qi::ascii::space_type> Collection;
 		qi::rule<Iterator, std::string(), qi::ascii::space_type> GameTree, OpenGameTree, CloseGameTree,
-			Sequence, Node, NodeSeparator, Property, PropIdent, PropValue, ValueT, UcLetter;
-		qi::rule<Iterator, std::string(), qi::ascii::space_type> Text;
+			Sequence, Node, NodeSeparator, Property, PropIdent, PropValue, ValueT, UcLetter, Text;
 
 		void add_game();
 		void close_game();
@@ -124,5 +132,16 @@ namespace ygc {
 		bool do_parse(std::string, std::vector<SGFTreeNode*>&);
 	};
 
+
+	class SGFParser {
+	public:
+		std::string fileBuffer;
+		SGFFileParser<std::string::const_iterator> fileParser;
+		std::vector<spTreeNode> games;
+		
+		SGFParser() {}
+		SGFParser(std::string fb) : fileBuffer(fb) {}
+		bool parseBuffer(std::string = std::string());
+	};
 
 }
