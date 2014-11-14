@@ -3,10 +3,9 @@
 * ygc SGF parser header
 */
 
+#include <boost/spirit/include/qi.hpp>
 #include <boost/spirit/include/qi_auto.hpp>
 #include <boost/spirit/include/qi_no_skip.hpp>
-#include <boost/config/warning_disable.hpp>
-#include <boost/spirit/include/qi.hpp>
 #include <boost/phoenix.hpp>
 
 #include <cstdint>
@@ -17,7 +16,7 @@
 
 #define BOOST_SPIRIT_USE_PHOENIX_V3
 
-namespace qi    = boost::spirit::qi;
+namespace qi	= boost::spirit::qi;
 namespace ascii = boost::spirit::ascii;
 
 namespace ygc {
@@ -36,10 +35,10 @@ namespace ygc {
 		std::string extrainfo;
 		std::string location;
 		struct {
-            uint16_t year;
-            uint16_t month;
-            uint16_t day;
-        } date;
+			uint16_t year;
+			uint16_t month;
+			uint16_t day;
+		} date;
 
 		std::string atevent;
 		std::string round;
@@ -64,54 +63,65 @@ namespace ygc {
 	};
 
 	class SGFNode {
-    public:
-        std::map<std::string, std::vector<std::string>> properties;
+	public:
+		std::map<std::string, std::vector<std::string>> properties;
 	};
 
 	class SGFTreeNode {
-    public:
-        SGFTreeNode* parent;
-        std::vector<SGFNode*> sequence;
-        std::vector<SGFTreeNode*> children;
+	public:
+		SGFTreeNode* parent;
+		std::vector<SGFNode*> sequence;
+		std::vector<SGFTreeNode*> children;
 
-        SGFTreeNode() : parent(nullptr) {}
+		SGFTreeNode() : parent(nullptr) {}
 	};
 
-    template <typename Iterator>
+	template <typename Iterator>
 	struct SGFParser : qi::grammar<Iterator, qi::ascii::space_type> {
 
-        std::vector<SGFTreeNode*> games;
-        SGFTreeNode* currentGameTree;
-        SGFNode* currentNode;
+		std::vector<SGFTreeNode*> games;
+		SGFTreeNode* currentGameTree;
+		SGFNode* currentNode;
 
 		SGFParser() : SGFParser::base_type(Collection), currentGameTree(nullptr), currentNode(nullptr)
 		{
 				Collection = +GameTree;
 				GameTree = OpenGameTree >> Sequence >> *GameTree >> CloseGameTree;
-                OpenGameTree = qi::lit('(')[boost::phoenix::bind(&SGFParser::add_game, this)];
-                CloseGameTree = qi::lit(')')[boost::phoenix::bind(&SGFParser::close_game, this)];
+
+				OpenGameTree = qi::lit('(')
+					[boost::phoenix::bind(&SGFParser::add_game, this)];
+				CloseGameTree = qi::lit(')')
+					[boost::phoenix::bind(&SGFParser::close_game, this)];
+
 				Sequence = +Node;
-				Node = (NodeSeparator >> *Property); //doesn't conform to the specification, but too many files during testing had empty nodes to just ignore it
-                NodeSeparator = (qi::lit(';'))[boost::phoenix::bind(&SGFParser::add_node, this)];
-				Property = (PropIdent >> +PropValue)[boost::phoenix::bind(&SGFParser::add_property, this, qi::_1, qi::_2)];
+				Node = (NodeSeparator >> *Property); //doesn't conform to the specification, 
+													 //but too many files during testing had empty 
+													 //nodes to just ignore it
+				NodeSeparator = (qi::lit(';'))
+					[boost::phoenix::bind(&SGFParser::add_node, this)];
+
+				Property = (PropIdent >> +PropValue)
+					[boost::phoenix::bind(&SGFParser::add_property, this, qi::_1, qi::_2)];
 				PropIdent = +UcLetter;
-                PropValue = qi::lit('[') >> ValueT >> qi::lit(']');
-				ValueT = -(Text); // admittedly, Real also counts as Text.
+				PropValue = qi::lit('[') >> ValueT >> qi::lit(']');
+
+				ValueT = -(Text);
 
 				UcLetter = qi::upper;
 				Text = boost::spirit::qi::no_skip[*((qi::print | qi::space) - qi::lit('[') - qi::lit(']'))];
 		}
 
 		qi::rule<Iterator, qi::ascii::space_type> Collection;
-        qi::rule<Iterator, std::string(), qi::ascii::space_type> GameTree, OpenGameTree, CloseGameTree, Sequence, Node, NodeSeparator, Property, PropIdent, PropValue, ValueT, UcLetter;
-        qi::rule<Iterator, std::string(), qi::ascii::space_type> Text;
+		qi::rule<Iterator, std::string(), qi::ascii::space_type> GameTree, OpenGameTree, CloseGameTree,
+			Sequence, Node, NodeSeparator, Property, PropIdent, PropValue, ValueT, UcLetter;
+		qi::rule<Iterator, std::string(), qi::ascii::space_type> Text;
 
 		void add_game();
-        void close_game();
-        void add_node();
-        void add_property(std::string, std::vector<std::string>);
+		void close_game();
+		void add_node();
+		void add_property(std::string, std::vector<std::string>);
 
-        bool do_parse(std::string, std::vector<SGFTreeNode*>&);
+		bool do_parse(std::string, std::vector<SGFTreeNode*>&);
 	};
 
 
