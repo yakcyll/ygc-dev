@@ -3,110 +3,115 @@
 * ygc SGF parser header
 */
 
-#include <boost/spirit/include/classic_core.hpp>
-#include "ygc.h"
+#include <boost/spirit/include/qi_auto.hpp>
+#include <boost/spirit/include/qi_no_skip.hpp>
+#include <boost/config/warning_disable.hpp>
+#include <boost/spirit/include/qi.hpp>
+#include <boost/phoenix.hpp>
 
-using namespace BOOST_SPIRIT_CLASSIC_NS;
+#include <cstdint>
+#include <map>
+#include <string>
+#include <vector>
+//#include "ygc.h"
+
+#define BOOST_SPIRIT_USE_PHOENIX_V3
+
+namespace qi    = boost::spirit::qi;
+namespace ascii = boost::spirit::ascii;
 
 namespace ygc {
 
-	private class FileHeader {
+	class FileHeader {
 	public:
-		Platform::String^ sourceApplication;
-		Platform::String^ fileEncoding;
+		std::string sourceApplication;
+		std::string fileEncoding;
 		uint8_t fileFormat;
 		uint8_t gameMode;
 	};
 
-	private class GameMetaData {
+	class GameMetaData {
 	public:
-		Platform::String^ name;
-		Platform::String^ extrainfo;
-		Platform::String^ location;
-		Windows::Globalization::Calendar^ date;
+		std::string name;
+		std::string extrainfo;
+		std::string location;
+		struct {
+            uint16_t year;
+            uint16_t month;
+            uint16_t day;
+        } date;
 
-		Platform::String^ atevent;
-		Platform::String^ round;
+		std::string atevent;
+		std::string round;
 
-		Platform::String^ source;
+		std::string source;
 	};
 
-	private class MatchInfo {
+	class MatchInfo {
 	public:
-		Platform::String^ black;
-		Platform::String^ blackRank;
-		Platform::String^ white;
-		Platform::String^ whiteRank;
+		std::string black;
+		std::string blackRank;
+		std::string white;
+		std::string whiteRank;
 
 		uint16_t size[2];
 
-		Platform::String^ ruleset;
-		Platform::String^ result;
+		std::string ruleset;
+		std::string result;
 		float komi;
 		uint16_t timePerPlayer;
 		uint16_t handicap;
 	};
 
-	public ref class SGFTreeNode sealed {
-	internal:
-		Vector<SGFNode^>^ sequence;
-		Vector<SGFTreeNode^>^ children;
+	class SGFNode {
+    public:
+        std::map<std::string, std::vector<std::string>> properties;
 	};
 
-	public ref class SGFNode sealed {
-	internal:
-		Platform::String^ nodeName;
-		Map<Platform::String^, Platform::String^>^ properties;
+	class SGFTreeNode {
+    public:
+        SGFTreeNode* parent;
+        std::vector<SGFNode*> sequence;
+        std::vector<SGFTreeNode*> children;
+
+        SGFTreeNode() : parent(nullptr) {}
 	};
 
-	private class SGFParser : public grammar < SGFParser > {
-	public:
-		Vector<SGFTreeNode^>^ games;
+    template <typename Iterator>
+	struct SGFParser : qi::grammar<Iterator, qi::ascii::space_type> {
 
-		template <typename ScannerT>
-		struct definition {
+        std::vector<SGFTreeNode*> games;
+        SGFTreeNode* currentGameTree;
+        SGFNode* currentNode;
 
-			definition(SGFParser const &)
-			{
-				Collection = GameTree >> *GameTree;
-				GameTree = "(" >> Sequence >> *GameTree >> ")";
-				Sequence = Node >> *Node;
-				Node = ";" >> *Property;
-				Property = PropIdent >> PropValue >> *PropValue;
-				PropIdent = UcLetter >> *UcLetter;
-				PropValue = "[" >> CValueType >> "]";
-				CValueType = (ValueT | Compose);
-				ValueT = (None | Number | Real | Double | Color | SimpleText | Text | Stone);
+		SGFParser() : SGFParser::base_type(Collection), currentGameTree(nullptr), currentNode(nullptr)
+		{
+				Collection = +GameTree;
+				GameTree = OpenGameTree >> Sequence >> *GameTree >> CloseGameTree;
+                OpenGameTree = qi::lit('(')[boost::phoenix::bind(&SGFParser::add_game, this)];
+                CloseGameTree = qi::lit(')')[boost::phoenix::bind(&SGFParser::close_game, this)];
+				Sequence = +Node;
+				Node = (NodeSeparator >> *Property); //doesn't conform to the specification, but too many files during testing had empty nodes to just ignore it
+                NodeSeparator = (qi::lit(';'))[boost::phoenix::bind(&SGFParser::add_node, this)];
+				Property = (PropIdent >> +PropValue)[boost::phoenix::bind(&SGFParser::add_property, this, qi::_1, qi::_2)];
+				PropIdent = +UcLetter;
+                PropValue = qi::lit('[') >> ValueT >> qi::lit(']');
+				ValueT = -(Text); // admittedly, Real also counts as Text.
 
-				ListOf = PropValue >> *PropValue
+				UcLetter = qi::upper;
+				Text = boost::spirit::qi::no_skip[*((qi::print | qi::space) - qi::lit('[') - qi::lit(']'))];
+		}
 
-				None = epsilon_p;
-				Digit = digit_p;
-				UcLetter = upper_p;
-				Number = !("+" | "-") >> Digit >> *Digit;
-				Real = Numer >> !("." >> Digit >> *Digit);
-				Double = "1" | "2";
-				Color = "B" | "W";
-				SimpleText = Text - space_p;
-				Text = print_p;
-				Compose = ValueT >> ":" >> ValueT;
+		qi::rule<Iterator, qi::ascii::space_type> Collection;
+        qi::rule<Iterator, std::string(), qi::ascii::space_type> GameTree, OpenGameTree, CloseGameTree, Sequence, Node, NodeSeparator, Property, PropIdent, PropValue, ValueT, UcLetter;
+        qi::rule<Iterator, std::string(), qi::ascii::space_type> Text;
 
-				Stone = alpha_p >> alpha_p;
-			}
+		void add_game();
+        void close_game();
+        void add_node();
+        void add_property(std::string, std::vector<std::string>);
 
-			rule<ScannerT> Collection, GameTree, Sequence, Node, Property, PropIdent, PropValue, CValueType, ValueT, None, Digit, UcLetter, Number, Real, Double, Color, SimpleText, Text, Compose, Stone;
-
-			rule<ScannerT> const &
-				start() const { return Collection; }
-
-		};
-
-		void add_game(char const*, char const*) { }
-		void add_seq(char const*, char const*) { }
-		void add_node(char const*, char const*) { }
-		void add_prop(char const*, char const*) { }
-		void add_root(char const*, char const*) { }
-
+        bool do_parse(std::string, std::vector<SGFTreeNode*>&);
 	};
 
 
