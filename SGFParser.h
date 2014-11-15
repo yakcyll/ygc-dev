@@ -13,6 +13,7 @@
 #include <memory>
 #include <string>
 #include <vector>
+#include <utility>
 //#include "ygc.h"
 
 #define BOOST_SPIRIT_USE_PHOENIX_V3
@@ -64,6 +65,14 @@ namespace ygc {
 		uint16_t timePerPlayer;
 		uint16_t handicap;
 	};
+
+    class GameTreeDesc {
+        FileHeader fileHeader;
+        GameMetaData gameMetaData;
+        MatchInfo matchInfo;
+
+        std::vector<std::pair<uint16_t, uint16_t>> premadeStones, moves;
+    };
 
 	class SGFNode {
 	public:
@@ -138,10 +147,13 @@ namespace ygc {
 		std::string fileBuffer;
 		SGFFileParser<std::string::const_iterator> fileParser;
 		std::vector<spTreeNode> games;
+
+        shared_ptr<GameTreeDesc> gameTreeDescription;
 		
 		SGFParser() {}
 		SGFParser(std::string fb) : fileBuffer(fb) {}
-		bool parseBuffer(std::string = std::string());
+		bool ParseBuffer(std::string = std::string());
+        bool TraverseTree();
 	};
 
 }
