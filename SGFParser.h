@@ -9,6 +9,7 @@
 #include <boost/phoenix.hpp>
 
 #include <cstdint>
+#include <functional>
 #include <map>
 #include <memory>
 #include <string>
@@ -54,24 +55,31 @@ namespace ygc {
 	public:
 		std::string black;
 		std::string blackRank;
+        std::string blackTeam;
 		std::string white;
 		std::string whiteRank;
+        std::string whiteTeam;
 
 		uint16_t size[2];
 
 		std::string ruleset;
 		std::string result;
 		float komi;
-		uint16_t timePerPlayer;
+		float timePerPlayer;
 		uint16_t handicap;
+
+        uint16_t startingPlayer;
+
+        MatchInfo() : komi(0), handicap(0), timePerPlayer(0), startingPlayer(0) { size[0] = size[1] = 0; }
 	};
 
     class GameTreeDesc {
+    public:
         FileHeader fileHeader;
         GameMetaData gameMetaData;
         MatchInfo matchInfo;
 
-        std::vector<std::pair<uint16_t, uint16_t>> premadeStones, moves;
+        std::vector<std::pair<uint16_t, std::pair<uint16_t, uint16_t>>> premadeStones, moves;
     };
 
 	class SGFNode {
@@ -97,11 +105,11 @@ namespace ygc {
 	template <typename Iterator>
 	struct SGFFileParser : qi::grammar<Iterator, qi::ascii::space_type> {
 
-		std::vector<spTreeNode> games;
+		shared_ptr<std::vector<spTreeNode>> games;
 		spTreeNode currentGameTree;
 		spNode currentNode;
 
-		SGFFileParser() : SGFFileParser::base_type(Collection), currentGameTree(nullptr), currentNode(nullptr)
+		SGFFileParser(shared_ptr<std::vector<spTreeNode>> g) : SGFFileParser::base_type(Collection), currentGameTree(nullptr), currentNode(nullptr), games(g)
 		{
 				Collection = +GameTree;
 				GameTree = OpenGameTree >> Sequence >> *GameTree >> CloseGameTree;
@@ -126,7 +134,7 @@ namespace ygc {
 				ValueT = -(Text);
 
 				UcLetter = qi::upper;
-				Text = boost::spirit::qi::no_skip[*((qi::print | qi::space) - qi::lit('[') - qi::lit(']'))];
+				Text = boost::spirit::qi::no_skip[*((qi::print | qi::space | qi::lit('\\') >> qi::char_) - qi::lit('[') - qi::lit(']'))];
 		}
 
 		qi::rule<Iterator, qi::ascii::space_type> Collection;
@@ -138,22 +146,27 @@ namespace ygc {
 		void add_node();
 		void add_property(std::string, std::vector<std::string>);
 
-		bool do_parse(std::string, std::vector<SGFTreeNode*>&);
+		bool do_parse(std::string);
 	};
 
 
 	class SGFParser {
 	public:
 		std::string fileBuffer;
-		SGFFileParser<std::string::const_iterator> fileParser;
-		std::vector<spTreeNode> games;
+		shared_ptr<SGFFileParser<std::string::const_iterator>> fileParser;
+		shared_ptr<std::vector<spTreeNode>> games;
+        std::map<std::string, std::function<bool(std::string, std::vector<std::string>&)>> nodeParsers;
 
-        shared_ptr<GameTreeDesc> gameTreeDescription;
+        GameTreeDesc gameTreeDescription;
 		
-		SGFParser() {}
-		SGFParser(std::string fb) : fileBuffer(fb) {}
+		SGFParser() { InitParser(); }
+		SGFParser(std::string fb) : fileBuffer(fb) { InitParser(); }
+        void InitParser();
 		bool ParseBuffer(std::string = std::string());
-        bool TraverseTree();
+        bool ParseTree();
+        bool TraverseTree(spTreeNode);
+        bool ParseNode(spNode);
+        std::string ConvertToSimpleText(std::string);
 	};
 
 }
