@@ -172,6 +172,7 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|ARM'">Create</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="SGFParser.cpp" />
+    <ClCompile Include="SGFPWrapper.cpp" />
     <ClCompile Include="ygc.cpp" />
     <ClCompile Include="Go19.cpp" />
     <ClCompile Include="InputScreen.cpp" />

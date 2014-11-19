@@ -28,6 +28,7 @@
     <ClCompile Include="Go19.cpp" />
     <ClCompile Include="InputScreen.cpp" />
     <ClCompile Include="SGFParser.cpp" />
+    <ClCompile Include="SGFPWrapper.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h" />

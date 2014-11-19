@@ -146,6 +146,7 @@ void EditorPage::InitPanels()
 	bp->LayoutRoot->SetZIndex(BottomPanel, 2);
 	BottomPanel->Content = BottomStack;
 	BottomPanel->Background = scb;
+	BottomPanel->ZoomMode = ZoomMode::Enabled;
 
 	BottomStack->Children->Append(ToolPanel);
 	BottomStack->Children->Append(FilePanel);
@@ -290,7 +291,7 @@ void EditorPage::InitPanels()
 	loadFile->Tapped += ref new TappedEventHandler([this](Object^ s, TappedRoutedEventArgs^ e) {
 		FileOpenPicker ^ openPicker = ref new FileOpenPicker();
 		openPicker->ViewMode = PickerViewMode::List;
-		openPicker->SuggestedStartLocation = PickerLocationId::DocumentsLibrary;
+		openPicker->SuggestedStartLocation = PickerLocationId::Downloads;
 		openPicker->FileTypeFilter->Append(".sgf");
 
 		fpcert = Windows::ApplicationModel::Core::CoreApplication::GetCurrentView()->Activated += ref new TypedEventHandler<Windows::ApplicationModel::Core::CoreApplicationView^, Windows::ApplicationModel::Activation::IActivatedEventArgs^>(this, &EditorPage::FilePickerContinuationActivated);
@@ -412,10 +413,10 @@ void EditorPage::ClearBoard()
 	historyModeEnabled = false;
 }
 
-bool EditorPage::LoadBoard(Platform::String^ filepath)
+bool EditorPage::LoadBoard(Platform::String^ fileBuffer)
 {
 	SGFPWrapper^ sgfp = ref new SGFPWrapper();
-	if (!sgfp->ParseBuffer(sgfp->LoadSGFFile(filepath)))
+	if (!sgfp->ParseBuffer(fileBuffer))
 		return false;
 	if (!sgfp->ParseTree())
 		return false;
@@ -487,12 +488,6 @@ void EditorPage::OnNavigatedTo(NavigationEventArgs^ e)
 
 	bp->BoardOnNavigatedTo(e);
 
-	if (fileEventArgs != nullptr)
-	{
-		LoadBoard(fileEventArgs->Files->GetAt(0)->Path);
-		fileEventArgs = nullptr; 
-	}
-
 }
 
 void EditorPage::FilePickerContinuationActivated(Windows::ApplicationModel::Core::CoreApplicationView ^s, Windows::ApplicationModel::Activation::IActivatedEventArgs ^e)
@@ -509,7 +504,13 @@ void EditorPage::FilePickerContinuationActivated(Windows::ApplicationModel::Core
 
 	Windows::ApplicationModel::Core::CoreApplication::GetCurrentView()->Activated -= fpcert;
 
-	LoadBoard(fopce->Files->GetAt(0)->Path);
+	concurrency::task<Platform::String^>(Windows::Storage::FileIO::ReadTextAsync(fopce->Files->GetAt(0))).then([this](Platform::String^ fileBuffer){
+		Windows::ApplicationModel::Core::CoreApplication::GetCurrentView()->CoreWindow->Dispatcher->RunAsync(Windows::UI::Core::CoreDispatcherPriority::High, ref new Windows::UI::Core::DispatchedHandler([this, fileBuffer](){
+			LoadBoard(fileBuffer);
+			BottomPanel->ChangeView(0.0, 0.0, 1.0f);
+		}));
+	});
+	
 }
 
 void EditorPage::OrientHandler(Object ^ s, SizeChangedEventArgs ^ sce)

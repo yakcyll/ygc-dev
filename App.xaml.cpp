@@ -6,6 +6,7 @@
 #include "pch.h"
 #include "EditorPage.xaml.h"
 #include "MatchPage.xaml.h"
+#include "SGFPWrapper.h"
 
 using namespace ygc;
 
@@ -139,8 +140,11 @@ void App::OnFileActivated(Windows::ApplicationModel::Activation::FileActivatedEv
 		}
 
 		if (p != nullptr) {
-			p->LoadBoard(e->Files->GetAt(0)->Path);
-			p->BottomPanel->ChangeView(0.0, 0.0, 1.0f);
+			concurrency::task<Platform::String^>(Windows::Storage::FileIO::ReadTextAsync((Windows::Storage::StorageFile^)e->Files->GetAt(0))).then([this, p](Platform::String^ fileBuffer){
+				Windows::ApplicationModel::Core::CoreApplication::GetCurrentView()->CoreWindow->Dispatcher->RunAsync(Windows::UI::Core::CoreDispatcherPriority::High, ref new Windows::UI::Core::DispatchedHandler([this, p, fileBuffer](){
+					p->LoadBoard(fileBuffer);
+				}));
+			});
 
 			Window::Current->Activate();
 		}
