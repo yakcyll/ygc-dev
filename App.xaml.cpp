@@ -6,7 +6,6 @@
 #include "pch.h"
 #include "EditorPage.xaml.h"
 #include "MatchPage.xaml.h"
-#include "SGFPWrapper.h"
 
 using namespace ygc;
 

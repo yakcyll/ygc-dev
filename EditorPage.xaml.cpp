@@ -146,7 +146,11 @@ void EditorPage::InitPanels()
 	bp->LayoutRoot->SetZIndex(BottomPanel, 2);
 	BottomPanel->Content = BottomStack;
 	BottomPanel->Background = scb;
-	BottomPanel->ZoomMode = ZoomMode::Enabled;
+	BottomPanel->ZoomMode = Windows::UI::Xaml::Controls::ZoomMode::Disabled;
+	BottomPanel->HorizontalScrollBarVisibility = Windows::UI::Xaml::Controls::ScrollBarVisibility::Hidden;
+	BottomPanel->VerticalScrollBarVisibility = Windows::UI::Xaml::Controls::ScrollBarVisibility::Hidden;
+	BottomPanel->HorizontalContentAlignment = Windows::UI::Xaml::HorizontalAlignment::Center;
+	BottomPanel->VerticalContentAlignment = Windows::UI::Xaml::VerticalAlignment::Center;
 
 	BottomStack->Children->Append(ToolPanel);
 	BottomStack->Children->Append(FilePanel);
