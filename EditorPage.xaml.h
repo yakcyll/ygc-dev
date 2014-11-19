@@ -35,11 +35,14 @@ namespace ygc
 		void InitInputHandler();
 
 		void UpdateIcons();
+		void ClearBoard();
+		bool LoadBoard(Platform::String^);
 		void UpdateBoard(ygcMove ^, bool);
 		void RewindHistory(bool = false);
 
 		void FilePickerContinuationActivated(Windows::ApplicationModel::Core::CoreApplicationView ^s, Windows::ApplicationModel::Activation::IActivatedEventArgs ^e);
 		Windows::Foundation::EventRegistrationToken fpcert;
+		Windows::ApplicationModel::Activation::FileActivatedEventArgs^ fileEventArgs;
 
 	public:
 		EditorPage();

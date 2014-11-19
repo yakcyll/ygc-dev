@@ -412,6 +412,36 @@ void EditorPage::ClearBoard()
 	historyModeEnabled = false;
 }
 
+bool EditorPage::LoadBoard(Platform::String^ filepath)
+{
+	SGFPWrapper^ sgfp = ref new SGFPWrapper();
+	if (!sgfp->ParseBuffer(sgfp->LoadSGFFile(filepath)))
+		return false;
+	if (!sgfp->ParseTree())
+		return false;
+
+	ClearBoard();
+
+	for (auto s : sgfp->sgfp->gameTreeDescription.premadeStones) {
+		ygcMove^ move = ref new ygcMove();
+		Point coord = Point(s.second.first, s.second.second);
+		move->stonesChanged.Append(ref new ygcStoneChange(Go19::Go19StoneColor(s.first + 1), ygcStoneStatus::ADDED, coord)); // assumes Go. For this interface implementation, it's safe to do so.
+		bp->currentMatch->moveHistory->Append(move);
+		++bp->currentMatch->moveId;
+		++moveId;
+
+		bp->AddStone(coord, Go19::Go19StoneColor(s.first + 1));
+		*bp->currentMatch->board->GetAt(coord) = s.first + 1;
+
+		uint16_t playerIndex = s.first;
+		++playerScores[playerIndex];
+		scoreTBs[playerIndex]->Text = playerScores[playerIndex].ToString();
+	}
+
+	UpdateIcons();
+	return true;
+}
+
 void EditorPage::UpdateBoard(ygcMove^ lastMove, bool forward)
 {
 	// O(n*m)
@@ -457,6 +487,12 @@ void EditorPage::OnNavigatedTo(NavigationEventArgs^ e)
 
 	bp->BoardOnNavigatedTo(e);
 
+	if (fileEventArgs != nullptr)
+	{
+		LoadBoard(fileEventArgs->Files->GetAt(0)->Path);
+		fileEventArgs = nullptr; 
+	}
+
 }
 
 void EditorPage::FilePickerContinuationActivated(Windows::ApplicationModel::Core::CoreApplicationView ^s, Windows::ApplicationModel::Activation::IActivatedEventArgs ^e)
@@ -473,29 +509,7 @@ void EditorPage::FilePickerContinuationActivated(Windows::ApplicationModel::Core
 
 	Windows::ApplicationModel::Core::CoreApplication::GetCurrentView()->Activated -= fpcert;
 
-	SGFPWrapper^ sgfp = ref new SGFPWrapper();
-	sgfp->ParseBuffer(sgfp->LoadSGFFile(fopce->Files->GetAt(0)->Path));
-	sgfp->ParseTree();
-
-	ClearBoard();
-
-	for (auto s : sgfp->sgfp->gameTreeDescription.premadeStones) {
-		ygcMove^ move = ref new ygcMove();
-		Point coord = Point(s.second.first, s.second.second);
-		move->stonesChanged.Append(ref new ygcStoneChange(Go19::Go19StoneColor(s.first + 1), ygcStoneStatus::ADDED, coord)); // assumes Go. For this interface implementation, it's safe to do so.
-		bp->currentMatch->moveHistory->Append(move);
-		++bp->currentMatch->moveId;
-		++moveId;
-
-		bp->AddStone(coord, Go19::Go19StoneColor(s.first + 1));
-		*bp->currentMatch->board->GetAt(coord) = s.first + 1;
-
-		uint16_t playerIndex = s.first;
-		++playerScores[playerIndex];
-		scoreTBs[playerIndex]->Text = playerScores[playerIndex].ToString();
-	}
-
-	UpdateIcons();
+	LoadBoard(fopce->Files->GetAt(0)->Path);
 }
 
 void EditorPage::OrientHandler(Object ^ s, SizeChangedEventArgs ^ sce)

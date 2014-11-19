@@ -37,21 +37,8 @@ App::App()
 	UnhandledException += ref new UnhandledExceptionEventHandler(this, &App::AccessViolationHandler);
 }
 
-/// <summary>
-/// Invoked when the application is launched normally by the end user. Other entry points
-/// will be used when the application is launched to open a specific file, to display
-/// search results, and so forth.
-/// </summary>
-/// <param name="e">Details about the launch request and process.</param>
-void App::OnLaunched(LaunchActivatedEventArgs^ e)
+Windows::UI::Xaml::Controls::Frame^ App::CreateRootFrame(void)
 {
-#if _DEBUG
-	if (IsDebuggerPresent())
-	{
-		DebugSettings->EnableFrameRateCounter = true;
-	}
-#endif
-
 	auto rootFrame = dynamic_cast<Frame^>(Window::Current->Content);
 
 	// Do not repeat app initialization when the Window already has content,
@@ -64,12 +51,6 @@ void App::OnLaunched(LaunchActivatedEventArgs^ e)
 
 		// TODO: Change this value to a cache size that is appropriate for your application.
 		rootFrame->CacheSize = 1;
-
-		if (e->PreviousExecutionState == ApplicationExecutionState::Terminated)
-		{
-			// TODO: Restore the saved session state only when appropriate, scheduling the
-			// final launch steps after the restore is complete.
-		}
 
 		// Place the frame in the current Window
 		Window::Current->Content = rootFrame;
@@ -93,14 +74,80 @@ void App::OnLaunched(LaunchActivatedEventArgs^ e)
 		// When the navigation stack isn't restored navigate to the first page,
 		// configuring the new page by passing required information as a navigation
 		// parameter.
-		if (!rootFrame->Navigate(EditorPage::typeid, e->Arguments))
+		if (!rootFrame->Navigate(TypeName(EditorPage::typeid)))
 		{
 			throw ref new FailureException("Failed to create initial page");
 		}
 	}
 
-	// Ensure the current window is active
-	Window::Current->Activate();
+	return rootFrame;
+}
+
+concurrency::task<void> App::RestoreStatus(ApplicationExecutionState previousExecutionState)
+{
+	auto prerequisite = concurrency::task<void>([](){});
+	if (previousExecutionState == ApplicationExecutionState::Terminated)
+	{
+		//prerequisite = SuspensionManager::RestoreAsync();
+	}
+
+	return prerequisite;
+}
+
+/// <summary>
+/// Invoked when the application is launched normally by the end user. Other entry points
+/// will be used when the application is launched to open a specific file, to display
+/// search results, and so forth.
+/// </summary>
+/// <param name="e">Details about the launch request and process.</param>
+void App::OnLaunched(LaunchActivatedEventArgs^ e)
+{
+#if _DEBUG
+	if (IsDebuggerPresent())
+	{
+		DebugSettings->EnableFrameRateCounter = true;
+	}
+#endif
+
+	auto rootFrame = CreateRootFrame();
+
+	RestoreStatus(e->PreviousExecutionState).then([=](concurrency::task<void> prerequisite)
+	{
+		Window::Current->Activate();
+	}, concurrency::task_continuation_context::use_current());
+}
+
+void App::OnFileActivated(Windows::ApplicationModel::Activation::FileActivatedEventArgs ^e)
+{
+	auto rootFrame = CreateRootFrame();
+
+	RestoreStatus(e->PreviousExecutionState).then([=](concurrency::task<void> prerequisite)
+	{
+		EditorPage ^p;
+
+		try {
+			p = safe_cast<EditorPage^>(rootFrame->Content);
+		}
+		catch (InvalidCastException ^ice) {
+
+			if (!rootFrame->Navigate(TypeName(EditorPage::typeid)))
+			{
+				throw ref new FailureException("Failed to create initial page");
+			}
+
+			p = dynamic_cast<EditorPage^>(rootFrame->Content);
+		}
+
+		if (p != nullptr) {
+			p->LoadBoard(e->Files->GetAt(0)->Path);
+			p->BottomPanel->ChangeView(0.0, 0.0, 1.0f);
+
+			Window::Current->Activate();
+		}
+
+		//provide proof of graceful handling of editor page rendering failure
+	}, concurrency::task_continuation_context::use_current());
+
 }
 
 /// <summary>
