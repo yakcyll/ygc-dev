@@ -6,12 +6,14 @@
 
 #include "pch.h"
 #include "EditorPage.xaml.h"
+#include "SGFPWrapper.h"
 
 using namespace ygc;
 
 using namespace Platform;
 using namespace Windows::Foundation;
 using namespace Windows::Foundation::Collections;
+using namespace Windows::Storage::Pickers;
 using namespace Windows::UI::Xaml;
 using namespace Windows::UI::Xaml::Controls;
 using namespace Windows::UI::Xaml::Controls::Primitives;
@@ -61,8 +63,11 @@ void EditorPage::InitBoard()
 
 void EditorPage::InitPanels()
 {
+	BottomPanel = ref new ScrollViewer();
 	CounterPanel = ref new StackPanel();
 	ToolPanel = ref new StackPanel();
+	FilePanel = ref new StackPanel();
+	BottomStack = ref new StackPanel();
 	CPInd = ref new StackPanel();
 	CPCount = ref new StackPanel();
 	TPMode = ref new StackPanel();
@@ -137,10 +142,14 @@ void EditorPage::InitPanels()
 
 
 	//bottom panel
-	bp->LayoutRoot->Children->Append(ToolPanel);
-	bp->LayoutRoot->SetZIndex(ToolPanel, 2);
+	bp->LayoutRoot->Children->Append(BottomPanel);
+	bp->LayoutRoot->SetZIndex(BottomPanel, 2);
+	BottomPanel->Content = BottomStack;
+	BottomPanel->Background = scb;
 
-	ToolPanel->Background = scb;
+	BottomStack->Children->Append(ToolPanel);
+	BottomStack->Children->Append(FilePanel);
+
 	ToolPanel->FlowDirection = Windows::UI::Xaml::FlowDirection::RightToLeft;
 
 	ToolPanel->Children->Append(TPHistoryCont);
@@ -205,16 +214,7 @@ void EditorPage::InitPanels()
 	clearBoard->Height = bp->PanelWidth;
 
 	clearBoard->Tapped += ref new TappedEventHandler([this](Object^ s, TappedRoutedEventArgs^ e) {
-		bp->ClearBoard();
-		for (auto i = 0; i < noPlayers; ++i) {
-			playerScores[i] = 0;
-			scoreTBs[i]->Text = playerScores[i].ToString();
-		}
-		*turn = 1;
-		moveId = 0;
-		checkPointId = 0;
-		historyModeEnabled = false;
-
+		ClearBoard();
 		UpdateIcons();
 	});
 
@@ -280,6 +280,24 @@ void EditorPage::InitPanels()
 	TPHistory->Children->Append(hRewind);
 	TPHistory->Children->Append(hPrev);
 	TPHistory->Children->Append(hNext);
+
+
+	loadFile = ref new Image();
+	loadFile->Source = ref new BitmapImage(ref new Uri(defaultAppSettings::defaultFileIcons[0]));
+	loadFile->Width = bp->PanelWidth;
+	loadFile->Height = bp->PanelWidth;
+
+	loadFile->Tapped += ref new TappedEventHandler([this](Object^ s, TappedRoutedEventArgs^ e) {
+		FileOpenPicker ^ openPicker = ref new FileOpenPicker();
+		openPicker->ViewMode = PickerViewMode::List;
+		openPicker->SuggestedStartLocation = PickerLocationId::DocumentsLibrary;
+		openPicker->FileTypeFilter->Append(".sgf");
+
+		fpcert = Windows::ApplicationModel::Core::CoreApplication::GetCurrentView()->Activated += ref new TypedEventHandler<Windows::ApplicationModel::Core::CoreApplicationView^, Windows::ApplicationModel::Activation::IActivatedEventArgs^>(this, &EditorPage::FilePickerContinuationActivated);
+		openPicker->PickSingleFileAndContinue();
+	});
+
+	FilePanel->Children->Append(loadFile);
 }
 
 void EditorPage::InitInputHandler()
@@ -350,6 +368,7 @@ void EditorPage::InitInputHandler()
 		hPrev->Opacity = 1.0;
 
 	});
+
 }
 
 void EditorPage::UpdateIcons()
@@ -375,6 +394,22 @@ void EditorPage::UpdateIcons()
 	else
 		stoneBrush->Source = ref new BitmapImage(ref new Uri(defaultAppSettings::defaultEditIcons[turn]));
 	
+}
+
+void EditorPage::ClearBoard()
+{
+	bp->ClearBoard();
+	for (auto i = 0; i < noPlayers; ++i) {
+		playerScores[i] = 0;
+		scoreTBs[i]->Text = playerScores[i].ToString();
+	}
+
+	if (mixedStonesEnabled)
+		*turn = 1;
+
+	moveId = 0;
+	checkPointId = 0;
+	historyModeEnabled = false;
 }
 
 void EditorPage::UpdateBoard(ygcMove^ lastMove, bool forward)
@@ -424,6 +459,45 @@ void EditorPage::OnNavigatedTo(NavigationEventArgs^ e)
 
 }
 
+void EditorPage::FilePickerContinuationActivated(Windows::ApplicationModel::Core::CoreApplicationView ^s, Windows::ApplicationModel::Activation::IActivatedEventArgs ^e)
+{
+	Windows::ApplicationModel::Activation::FileOpenPickerContinuationEventArgs^ fopce;
+	try {
+		fopce = safe_cast<Windows::ApplicationModel::Activation::FileOpenPickerContinuationEventArgs^>(e);
+	}
+	catch (InvalidCastException ^ice) {
+		return;
+	}
+
+	if (fopce->Files->Size == 0) return;
+
+	Windows::ApplicationModel::Core::CoreApplication::GetCurrentView()->Activated -= fpcert;
+
+	SGFPWrapper^ sgfp = ref new SGFPWrapper();
+	sgfp->ParseBuffer(sgfp->LoadSGFFile(fopce->Files->GetAt(0)->Path));
+	sgfp->ParseTree();
+
+	ClearBoard();
+
+	for (auto s : sgfp->sgfp->gameTreeDescription.premadeStones) {
+		ygcMove^ move = ref new ygcMove();
+		Point coord = Point(s.second.first, s.second.second);
+		move->stonesChanged.Append(ref new ygcStoneChange(Go19::Go19StoneColor(s.first + 1), ygcStoneStatus::ADDED, coord)); // assumes Go. For this interface implementation, it's safe to do so.
+		bp->currentMatch->moveHistory->Append(move);
+		++bp->currentMatch->moveId;
+		++moveId;
+
+		bp->AddStone(coord, Go19::Go19StoneColor(s.first + 1));
+		*bp->currentMatch->board->GetAt(coord) = s.first + 1;
+
+		uint16_t playerIndex = s.first;
+		++playerScores[playerIndex];
+		scoreTBs[playerIndex]->Text = playerScores[playerIndex].ToString();
+	}
+
+	UpdateIcons();
+}
+
 void EditorPage::OrientHandler(Object ^ s, SizeChangedEventArgs ^ sce)
 {
 	bp->BoardOrientHandler(s, sce);
@@ -431,6 +505,7 @@ void EditorPage::OrientHandler(Object ^ s, SizeChangedEventArgs ^ sce)
 	if (Windows::UI::ViewManagement::ApplicationView::GetForCurrentView()->Orientation == Windows::UI::ViewManagement::ApplicationViewOrientation::Portrait) {
 		CounterPanel->Orientation = Orientation::Horizontal;
 		CPCount->Orientation = Orientation::Horizontal;
+		BottomStack->Orientation = Orientation::Vertical;
 
 		CounterPanel->Height = bp->PanelWidth;
 		CounterPanel->Width = bp->AppSpaceWidth;
@@ -444,9 +519,14 @@ void EditorPage::OrientHandler(Object ^ s, SizeChangedEventArgs ^ sce)
 		ToolPanel->Height = bp->PanelWidth;
 		ToolPanel->Width = bp->AppSpaceWidth;
 		ToolPanel->Orientation = Orientation::Horizontal;
+		FilePanel->Height = bp->PanelWidth;
+		FilePanel->Width = bp->AppSpaceWidth;
+		FilePanel->Orientation = Orientation::Horizontal;
+		BottomPanel->Height = bp->PanelWidth;
+		BottomPanel->Width = bp->AppSpaceWidth;
 
-		bp->LayoutRoot->SetTop(ToolPanel, bp->AppSpaceHeight - bp->PanelWidth);
-		bp->LayoutRoot->SetLeft(ToolPanel, 0.0);
+		bp->LayoutRoot->SetTop(BottomPanel, bp->AppSpaceHeight - bp->PanelWidth);
+		bp->LayoutRoot->SetLeft(BottomPanel, 0.0);
 
 		TPMode->Orientation = Orientation::Horizontal;
 		TPHistory->Orientation = Orientation::Horizontal;
@@ -463,6 +543,7 @@ void EditorPage::OrientHandler(Object ^ s, SizeChangedEventArgs ^ sce)
 	else {
 		CounterPanel->Orientation = Orientation::Vertical;
 		CPCount->Orientation = Orientation::Vertical;
+		BottomStack->Orientation = Orientation::Horizontal;
 
 		CounterPanel->Height = bp->AppSpaceHeight;
 		CounterPanel->Width = bp->PanelWidth;
@@ -476,9 +557,14 @@ void EditorPage::OrientHandler(Object ^ s, SizeChangedEventArgs ^ sce)
 		ToolPanel->Height = bp->AppSpaceHeight;
 		ToolPanel->Width = bp->PanelWidth;
 		ToolPanel->Orientation = Orientation::Vertical;
+		FilePanel->Height = bp->AppSpaceHeight;
+		FilePanel->Width = bp->PanelWidth;
+		FilePanel->Orientation = Orientation::Vertical;
+		BottomPanel->Height = bp->AppSpaceHeight;
+		BottomPanel->Width = bp->PanelWidth;
 
-		bp->LayoutRoot->SetTop(ToolPanel, 0.0);
-		bp->LayoutRoot->SetLeft(ToolPanel, bp->AppSpaceWidth - bp->PanelWidth);
+		bp->LayoutRoot->SetTop(BottomPanel, 0.0);
+		bp->LayoutRoot->SetLeft(BottomPanel, bp->AppSpaceWidth - bp->PanelWidth);
 
 		TPMode->Orientation = Orientation::Vertical;
 		TPHistory->Orientation = Orientation::Vertical;

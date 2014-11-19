@@ -3,13 +3,14 @@
  * ygc SGF parser implementation
  */
 
+#include "pch.h"
 #include <boost/algorithm/string/replace.hpp>
 #include "SGFParser.h"
 
 using namespace ygc;
 using std::shared_ptr;
 
-    template <typename Iterator>
+template <typename Iterator>
 void SGFFileParser<Iterator>::add_game() 
 { 
     spTreeNode newGameTree = spTreeNode(new SGFTreeNode()); 
@@ -26,7 +27,7 @@ void SGFFileParser<Iterator>::add_game()
     currentGameTree = newGameTree;
 }
 
-    template <typename Iterator>
+template <typename Iterator>
 void SGFFileParser<Iterator>::close_game()
 {
     if (currentGameTree->parent)
@@ -37,20 +38,20 @@ void SGFFileParser<Iterator>::close_game()
     currentNode = nullptr;
 }
 
-    template <typename Iterator>
+template <typename Iterator>
 void SGFFileParser<Iterator>::add_node() 
 { 
     currentNode = spNode(new SGFNode()); 
     currentGameTree->sequence.push_back(currentNode); 
 }
 
-    template <typename Iterator>
+template <typename Iterator>
 void SGFFileParser<Iterator>::add_property(std::string propident, std::vector<std::string> propvalues) 
 {
     currentNode->properties[propident] = propvalues;
 }
 
-    template <typename Iterator>
+template <typename Iterator>
 bool SGFFileParser<Iterator>::do_parse(std::string buffer)
 {
     std::string::const_iterator iter = buffer.begin(), end = buffer.end();
@@ -216,7 +217,6 @@ void SGFParser::InitParser()
                 coord.second = c[1] >= 97 ? c[1] - 97 : c[1] - 65;
 
                 if (coord.first >= this->gameTreeDescription.matchInfo.size[0] || coord.second >= this->gameTreeDescription.matchInfo.size[1])
-
                     if (propId == "B" || propId == "W")
                         this->gameTreeDescription.moves.push_back(std::pair<uint16_t, std::pair<uint16_t, uint16_t>>(propId == "W", coord));
                     else

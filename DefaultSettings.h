@@ -19,6 +19,7 @@ namespace ygc {
 		Platform::String^ const defaultAdditionalIcons[1] = { "ms-appx:///Assets/board_assets/appbar.page.png" };
 		Platform::String^ const defaultEditNavIcons[3] = { "ms-appx:///Assets/board_assets/appbar.control.rewind.variant.png", "ms-appx:///Assets/board_assets/appbar.navigate.previous.png", "ms-appx:///Assets/board_assets/appbar.navigate.next.png" };
 		Platform::String^ const defaultActionIcons[2] = { "ms-appx:///Assets/board_assets/appbar.flag.wavy.png", "ms-appx:///Assets/board_assets/appbar.hourglass.png" };
+		Platform::String^ const defaultFileIcons[2] = { "ms-appx:///Assets/board_assets/appbar.folder.ellipsis.png", "ms-appx:///Assets/board_assets/appbar.save.png" };
 
 	};
 

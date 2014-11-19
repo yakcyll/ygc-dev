@@ -71,8 +71,9 @@
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|ARM'">
     <ClCompile>
-      <AdditionalOptions>/bigobj %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions>/bigobj /Zm219 %(AdditionalOptions)</AdditionalOptions>
       <DisableSpecificWarnings>4453;28204</DisableSpecificWarnings>
+      <PrecompiledHeader>Use</PrecompiledHeader>
     </ClCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|ARM'">
@@ -106,6 +107,7 @@
       <DependentUpon>App.xaml</DependentUpon>
     </ClInclude>
     <ClInclude Include="SGFParser.h" />
+    <ClInclude Include="SGFPWrapper.h" />
     <ClInclude Include="ygc.h" />
     <ClInclude Include="DefaultSettings.h" />
     <ClInclude Include="Go19.h" />
@@ -139,10 +141,12 @@
     <Image Include="Assets\board_assets\appbar.control.rewind.variant.png" />
     <Image Include="Assets\board_assets\appbar.edit.png" />
     <Image Include="Assets\board_assets\appbar.flag.wavy.png" />
+    <Image Include="Assets\board_assets\appbar.folder.ellipsis.png" />
     <Image Include="Assets\board_assets\appbar.hourglass.png" />
     <Image Include="Assets\board_assets\appbar.navigate.next.png" />
     <Image Include="Assets\board_assets\appbar.navigate.previous.png" />
     <Image Include="Assets\board_assets\appbar.page.png" />
+    <Image Include="Assets\board_assets\appbar.save.png" />
     <Image Include="Assets\board_assets\avatar_small.jpg" />
     <Image Include="Assets\board_assets\ygc-edit-stone-black.png" />
     <Image Include="Assets\board_assets\ygc-edit-stone-both.png" />

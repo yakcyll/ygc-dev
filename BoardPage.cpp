@@ -177,6 +177,9 @@ void BoardPage::ClearBoard() {
 		*currentMatch->board->GetAt(i->Current) = 0;
 
 	stonesCoordinates->Clear();
+
+	currentMatch->moveId = 0;
+	currentMatch->moveHistory->Clear();
 }
 
 /// <summary>

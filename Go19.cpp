@@ -90,6 +90,7 @@ bool Go19::inAtari(ygcBoard^ board, Point coord, bool killed)
 bool Go19::bGo19_IsLegal(ygcMatch^ m, Point coord)
 {
 	Go19::Go19StoneColor^ oc = ref new Go19::Go19StoneColor(*m->turn);
+	bool snapback = false;
 	oc->increment();
 
 	if (*m->board->GetAt(coord) != Go19::Go19StoneColor::EMPTY)
@@ -98,9 +99,14 @@ bool Go19::bGo19_IsLegal(ygcMatch^ m, Point coord)
 	if (coord.Equals(((Go19Match^)m)->koPoint)) {
 		for (Point neighbor : getNeighbors(coord, Point(m->board->sBoardWidth, m->board->sBoardHeight))) {
 			ygcBoard^ b = ref new ygcBoard(m->board);
-			if (getChainPoints(b, neighbor)->Size == 1)
-				return false;
+			if (getChainPoints(b, neighbor)->Size != 1) {
+				snapback = true;
+				break;
+			}
 		}
+
+		if (!snapback)
+			return false;
 	}
 
 	bool suicide = true;

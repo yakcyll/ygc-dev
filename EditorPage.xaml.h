@@ -13,12 +13,13 @@ namespace ygc
 	public ref class EditorPage sealed
 	{
 	internal:
-		StackPanel ^ CounterPanel, ^ ToolPanel, ^ CPCount, ^CPInd, ^ TPMode, ^ TPHistory;
+		StackPanel ^ CounterPanel, ^ ToolPanel, ^ FilePanel, ^ BottomStack, ^ CPCount, ^CPInd, ^ TPMode, ^ TPHistory;
 		Grid ^ CPIndCont, ^ TPModeCont, ^ TPHistoryCont;
 		Border ^ CPCountBorder, ^CPIndBorder, ^ TPModeBorder, ^TPHistoryBorder;
 		Canvas ^ LayoutRoot;
+		ScrollViewer ^ BottomPanel;
 
-		Image ^ turnIndicator, ^ stoneBrush, ^ checkPoint, ^ clearBoard, ^ hRewind, ^ hPrev, ^ hNext;
+		Image ^ turnIndicator, ^ stoneBrush, ^ checkPoint, ^ clearBoard, ^ hRewind, ^ hPrev, ^ hNext, ^loadFile;
 
 		Array<TextBlock^>^ scoreTBs;
 		Array<uint16_t>^ playerScores;
@@ -36,6 +37,9 @@ namespace ygc
 		void UpdateIcons();
 		void UpdateBoard(ygcMove ^, bool);
 		void RewindHistory(bool = false);
+
+		void FilePickerContinuationActivated(Windows::ApplicationModel::Core::CoreApplicationView ^s, Windows::ApplicationModel::Activation::IActivatedEventArgs ^e);
+		Windows::Foundation::EventRegistrationToken fpcert;
 
 	public:
 		EditorPage();

@@ -10,7 +10,6 @@
 #include "App.xaml.h"
 
 #include "ygc.h"
-#include "SGFParser.h"
 
 #include "InputScreen.h"
 

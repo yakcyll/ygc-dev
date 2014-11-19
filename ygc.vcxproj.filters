@@ -21,23 +21,26 @@
   <ItemGroup>
     <ClCompile Include="App.xaml.cpp" />
     <ClCompile Include="pch.cpp" />
-    <ClCompile Include="ygcGo19.cpp" />
     <ClCompile Include="ygc.cpp" />
-    <ClCompile Include="ygcInputScreen.cpp" />
     <ClCompile Include="BoardPage.cpp" />
     <ClCompile Include="EditorPage.xaml.cpp" />
     <ClCompile Include="MatchPage.xaml.cpp" />
+    <ClCompile Include="Go19.cpp" />
+    <ClCompile Include="InputScreen.cpp" />
+    <ClCompile Include="SGFParser.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h" />
     <ClInclude Include="App.xaml.h" />
     <ClInclude Include="ygc.h" />
-    <ClInclude Include="ygcGo19.h" />
-    <ClInclude Include="ygcDefaultSettings.h" />
-    <ClInclude Include="ygcInputScreen.h" />
     <ClInclude Include="BoardPage.h" />
     <ClInclude Include="EditorPage.xaml.h" />
     <ClInclude Include="MatchPage.xaml.h" />
+    <ClInclude Include="Go19.h" />
+    <ClInclude Include="DefaultSettings.h" />
+    <ClInclude Include="InputScreen.h" />
+    <ClInclude Include="SGFParser.h" />
+    <ClInclude Include="SGFPWrapper.h" />
   </ItemGroup>
   <ItemGroup>
     <AppxManifest Include="Package.appxmanifest" />
@@ -104,6 +107,12 @@
       <Filter>Assets\board_assets</Filter>
     </Image>
     <Image Include="Assets\board_assets\appbar.flag.wavy.png">
+      <Filter>Assets\board_assets</Filter>
+    </Image>
+    <Image Include="Assets\board_assets\appbar.folder.ellipsis.png">
+      <Filter>Assets\board_assets</Filter>
+    </Image>
+    <Image Include="Assets\board_assets\appbar.save.png">
       <Filter>Assets\board_assets</Filter>
     </Image>
   </ItemGroup>

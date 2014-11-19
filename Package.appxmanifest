@@ -26,10 +26,21 @@
           <m3:Rotation Preference="landscapeFlipped" />
         </m3:InitialRotationPreference>
       </m3:VisualElements>
+      <Extensions>
+        <Extension Category="windows.fileTypeAssociation">
+          <FileTypeAssociation Name="sgf">
+            <DisplayName>Smart Game Format File</DisplayName>
+            <SupportedFileTypes>
+              <FileType>.sgf</FileType>
+            </SupportedFileTypes>
+          </FileTypeAssociation>
+        </Extension>
+      </Extensions>
     </Application>
   </Applications>
   <Capabilities>
     <Capability Name="internetClientServer" />
     <Capability Name="picturesLibrary" />
+    <Capability Name="removableStorage" />
   </Capabilities>
 </Package>
