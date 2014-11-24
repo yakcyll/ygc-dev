@@ -49,7 +49,7 @@ EditorPage::EditorPage() : historyModeEnabled(false), moveId(0), checkPointId(0)
 
 void EditorPage::InitBoard()
 {
-	bp->currentMatch = ref new Go19::Go19Match(13, 13); // <--
+	bp->currentMatch = ref new Go19::Go19Match(19, 19); // <--
 
 	for (uint16_t i = 0; i < bp->currentMatch->board->sBoardWidth; ++i)
 		for (uint16_t j = 0; j < bp->currentMatch->board->sBoardHeight; ++j)
@@ -442,6 +442,26 @@ bool EditorPage::LoadBoard(Platform::String^ fileBuffer)
 		++playerScores[playerIndex];
 		scoreTBs[playerIndex]->Text = playerScores[playerIndex].ToString();
 	}
+
+	checkPointId = moveId;
+	*historyTurn = sgfp->sgfp->gameTreeDescription.matchInfo.startingPlayer + 1;
+	*turn = sgfp->sgfp->gameTreeDescription.matchInfo.startingPlayer + 1;
+	historyModeEnabled = true;
+
+	for (auto s : sgfp->sgfp->gameTreeDescription.moves) {
+		ygcMove^ move = ref new ygcMove();
+		Point coord = Point(s.second.first, s.second.second);
+		move->stonesChanged.Append(ref new ygcStoneChange(Go19::Go19StoneColor(s.first + 1), ygcStoneStatus::ADDED, coord));
+		bp->currentMatch->moveHistory->Append(move);
+		*bp->currentMatch->board->GetAt(coord) = s.first + 1;
+		++moveId;
+
+		for (Point p : Go19::vGo19_SearchForPrisoners(bp->currentMatch, coord))
+			move->stonesChanged.Append(ref new ygcStoneChange(Go19::Go19StoneColor(s.first + 1).increment(), ygcStoneStatus::FALLEN, p));
+	}
+
+	while (moveId > checkPointId)
+		*bp->currentMatch->board->GetAt(bp->currentMatch->moveHistory->GetAt(--moveId)->stonesChanged.GetAt(0)->coord) = 0;
 
 	UpdateIcons();
 	return true;

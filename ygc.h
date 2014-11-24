@@ -56,7 +56,7 @@ namespace ygc {
 		ygcStoneColor(const ygcStoneColor %y) : stoneColor(y.stoneColor), maxval(y.maxval) {}
 		operator int() { return stoneColor; }
 
-		void increment(unsigned int count = 1) { this->stoneColor += count; this->stoneColor %= maxval; if (this->stoneColor == 0) this->stoneColor++; }
+		ygcStoneColor increment(unsigned int count = 1) { this->stoneColor += count; this->stoneColor %= maxval; if (this->stoneColor == 0) this->stoneColor++; return *this; }
 		ygcStoneColor previous(unsigned int count = 1) { return ygcStoneColor(((this->stoneColor - count) < 1 ? (this->stoneColor - count) + maxval - 1: (this->stoneColor - count)), maxval); }
 	};
 

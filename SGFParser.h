@@ -31,6 +31,8 @@ namespace ygc {
 		std::string fileEncoding;
 		uint8_t fileFormat;
 		uint8_t gameMode;
+
+		FileHeader() : fileFormat(4), gameMode(1) { }
 	};
 
 	class GameMetaData {
@@ -69,7 +71,7 @@ namespace ygc {
 
         uint16_t startingPlayer;
 
-        MatchInfo() : komi(0), handicap(0), timePerPlayer(0), startingPlayer(0) { size[0] = size[1] = 0; }
+        MatchInfo() : komi(0), handicap(0), timePerPlayer(0), startingPlayer(0) { size[0] = size[1] = 19; }
 	};
 
     class GameTreeDesc {

@@ -216,7 +216,7 @@ void SGFParser::InitParser()
                 coord.first = c[0] >= 97 ? c[0] - 97 : c[0] - 65;
                 coord.second = c[1] >= 97 ? c[1] - 97 : c[1] - 65;
 
-                if (coord.first >= this->gameTreeDescription.matchInfo.size[0] || coord.second >= this->gameTreeDescription.matchInfo.size[1])
+                if (coord.first < this->gameTreeDescription.matchInfo.size[0] || coord.second < this->gameTreeDescription.matchInfo.size[1])
                     if (propId == "B" || propId == "W")
                         this->gameTreeDescription.moves.push_back(std::pair<uint16_t, std::pair<uint16_t, uint16_t>>(propId == "W", coord));
                     else
@@ -261,7 +261,7 @@ bool SGFParser::ParseTree()
     TraverseTree(games->at(0));
 
     //validate data
-    if (gameTreeDescription.fileHeader.fileFormat != 4 || gameTreeDescription.fileHeader.gameMode != 1)
+    if (gameTreeDescription.fileHeader.fileFormat > 4 || gameTreeDescription.fileHeader.gameMode != 1)
         return false;
 
     return true;
@@ -284,8 +284,10 @@ bool SGFParser::TraverseTree(spTreeNode gameTree)
 
 bool SGFParser::ParseNode(spNode node)
 {
-    for (auto p : node->properties)
-        nodeParsers[p.first](p.first, p.second);
+	for (auto p : node->properties) {
+		if (nodeParsers.find(p.first) != nodeParsers.end())
+			nodeParsers[p.first](p.first, p.second);
+	}
 
     return true;
 }
