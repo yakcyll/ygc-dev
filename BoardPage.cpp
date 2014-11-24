@@ -52,14 +52,15 @@ void BoardPage::InitBoardGrid()
 	//init board
 	boardGrid = ref new Canvas();
 
-	boardGrid->Background = ref new SolidColorBrush(Windows::UI::Colors::DarkGreen);
 	boardGrid->RenderTransform = ref new RotateTransform();
 	boardGrid->HorizontalAlignment = Windows::UI::Xaml::HorizontalAlignment::Center;
 	boardGrid->VerticalAlignment = Windows::UI::Xaml::VerticalAlignment::Center;
 	boardGrid->Margin = Thickness(0);
 
 	boardGridBorder = ref new Border();
-	boardGridBorder->Padding = 2 * SideMargin;
+	boardGridBorder->Padding = Thickness(2 * SideMargin);
+	boardGridBorder->HorizontalAlignment = Windows::UI::Xaml::HorizontalAlignment::Center;
+	boardGridBorder->VerticalAlignment = Windows::UI::Xaml::VerticalAlignment::Center;
 	boardGridBorder->Child = boardGrid;
 }
 
@@ -71,10 +72,8 @@ void BoardPage::InitScrollViewer()
 	ScrollBoardView->ZoomMode = Windows::UI::Xaml::Controls::ZoomMode::Enabled;
 	ScrollBoardView->HorizontalScrollBarVisibility = Windows::UI::Xaml::Controls::ScrollBarVisibility::Hidden;
 	ScrollBoardView->VerticalScrollBarVisibility = Windows::UI::Xaml::Controls::ScrollBarVisibility::Hidden;
-	ScrollBoardView->HorizontalContentAlignment = Windows::UI::Xaml::HorizontalAlignment::Center; 
-	ScrollBoardView->VerticalContentAlignment = Windows::UI::Xaml::VerticalAlignment::Center;
 	ScrollBoardView->MinZoomFactor = 0.5;
-	ScrollBoardView->MaxZoomFactor = 3.0;
+	ScrollBoardView->MaxZoomFactor = 3.5;
 	ScrollBoardView->Background = ref new SolidColorBrush(Windows::UI::Colors::DarkOrange);
 
 	ScrollBoardView->Content = boardGridBorder;
@@ -191,28 +190,26 @@ void BoardPage::BoardOnNavigatedTo(NavigationEventArgs^ e)
 {
 	(void) e;	// Unused parameter
 
-	/*switch (Settings.OrientationLock)
-	{
-	case OrientationLock.Rotate:
-		this->SupportedOrientations = SupportedPageOrientation.PortraitOrLandscape;
+	if (Windows::UI::ViewManagement::ApplicationView::GetForCurrentView()->Orientation == Windows::UI::ViewManagement::ApplicationViewOrientation::Portrait) {
 		AppSpaceWidth = Window::Current->Bounds.Width;
-		AppSpaceHeight = Window::Current->Bounds.Height - 32;
-		break;
-	case OrientationLock.HorizontalLock:
-		this.SupportedOrientations = SupportedPageOrientation.Landscape;
-		break;
-	case OrientationLock.VerticalLock:
-		this.SupportedOrientations = SupportedPageOrientation.Portrait;
-		AppSpaceWidth = Window::Current->Bounds.Width;
-		AppSpaceHeight = Window::Current->Bounds.Height - 32;
-		break;
-	}*/
+		AppSpaceHeight = Window::Current->Bounds.Height - 32 / Windows::Graphics::Display::DisplayInformation::GetForCurrentView()->RawPixelsPerViewPixel;
+		SideMargin = AppSpaceWidth / (currentMatch->board->sBoardWidth + 1);
 
-	AppSpaceWidth = Window::Current->Bounds.Width;
-	AppSpaceHeight = Window::Current->Bounds.Height - 32.0 / Windows::Graphics::Display::DisplayInformation::GetForCurrentView()->RawPixelsPerViewPixel;
+		boardGrid->Width = AppSpaceWidth;
+		boardGrid->Height = AppSpaceWidth * (currentMatch->board->sBoardHeight + 1) / double(currentMatch->board->sBoardWidth + 1);
 
-	boardGrid->Width = AppSpaceWidth;
-	boardGrid->Height = AppSpaceWidth * (currentMatch->board->sBoardHeight + 1) / double(currentMatch->board->sBoardWidth + 1);
+	}
+	else {
+		AppSpaceWidth = Window::Current->Bounds.Width - 72 / Windows::Graphics::Display::DisplayInformation::GetForCurrentView()->RawPixelsPerViewPixel;
+		AppSpaceHeight = Window::Current->Bounds.Height;
+		SideMargin = AppSpaceHeight / (currentMatch->board->sBoardWidth + 1);
+
+		boardGrid->Width = AppSpaceHeight;
+		boardGrid->Height = AppSpaceHeight * (currentMatch->board->sBoardHeight + 1) / double(currentMatch->board->sBoardWidth + 1);
+	}
+
+	ScrollBoardView->Height = AppSpaceHeight;
+	ScrollBoardView->Width = AppSpaceWidth;
 
 	((RotateTransform^)boardGrid->RenderTransform)->CenterX = boardGrid->Width / 2.0f;
 	((RotateTransform^)boardGrid->RenderTransform)->CenterY = boardGrid->Height / 2.0f;
